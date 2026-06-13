@@ -14,11 +14,28 @@
 | [`気相NMR_状況とロードマップ.html`](気相NMR_状況とロードマップ.html) | **メイン提案書**(要旨・原理・現状・精度の不等式 R=δ/w&gt;2・10因子・ロードマップ・競合・PoC精度仮説。対話的シミュレーション付き) |
 | [`気相NMR_理解のための解説.html`](気相NMR_理解のための解説.html) | 原理の解説(姉妹資料) |
 | [`bayes_comb_reanalysis.py`](bayes_comb_reanalysis.py) | **ベイズ再解析シミュレーター**。TOF分裂の有意性(ベイズ因子)と必要ショット数を試算 |
+| [`gasnmr_tool.py`](gasnmr_tool.py) | 精度設計ツール(GUI+バッチ)。分解度バジェット R(N) とベイズ判定を統合 |
+| [`run_bayes.bat`](run_bayes.bat) | **Windows用**: ベイズシミュレーターをダブルクリックで実行 |
+| [`gasnmr_tool.bat`](gasnmr_tool.bat) | **Windows用**: 設計ツール(GUI)をダブルクリックで起動 |
 | [`分析まとめ_気相NMR.md`](分析まとめ_気相NMR.md) | 研究概要・ボトルネック10項目 |
 | [`文献調査_最新ヒント.md`](文献調査_最新ヒント.md) | 第1〜3回の文献調査ログ(R期待値の根拠つき) |
 
+## 実行方法
+
+### Windows(かんたん)
+`.bat` を**ダウンロードしてダブルクリック**するだけ。Python本体さえ入っていれば、必要なスクリプトの取得・ライブラリ(numpy / scipy / matplotlib)の導入・実行まで自動で行います。
+
+- `run_bayes.bat` … ベイズ再解析シミュレーター
+- `gasnmr_tool.bat` … 設計ツール(GUI)
+
+> Python が未導入の場合は [python.org](https://www.python.org/downloads/) からインストールし、インストーラの **「Add Python to PATH」にチェック**してください。`.bat` 単体をダウンロードすれば、不足する `.py` は GitHub から自動取得します。
+
+### macOS / Linux(手動)
 ```bash
-python3 bayes_comb_reanalysis.py
+pip install numpy scipy matplotlib
+python3 bayes_comb_reanalysis.py        # ベイズ再解析
+python3 gasnmr_tool.py                   # 設計ツール(GUI)
+python3 gasnmr_tool.py --batch config.json   # バッチ → batch_results.csv
 ```
 
 ## 原典・ことわり

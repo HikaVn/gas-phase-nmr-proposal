@@ -43,31 +43,40 @@ from scipy.stats import norm
 # ===========================================================================
 # (A) 分解度バジェットのコア
 # ===========================================================================
-S0_REF = 0.03      # ν0=100 m/s 基準の 1往復あたり間隔 [m/s]
+S0_REF = 0.03      # ν0=100 m/s・NH4+ 基準の 1往復あたり間隔 [m/s]
 NU0_REF = 100.0
+MU_P = 1.41060679e-26   # 陽子磁気モーメント [J/T]
+AMU = 1.66053907e-27    # 原子質量単位 [kg]
 
 
-def s0_of(nu0):
-    """初速 ν0 での 1往復あたり間隔 s0 ∝ 1/ν0。"""
-    return S0_REF * NU0_REF / nu0
+def s0_from_physics(M_amu, B_H=9.4, B_L=3.1, nu0=NU0_REF):
+    """物理定数から 1往復あたり間隔 s0 = μ_p(B_H-B_L)/(M ν0) [m/s] を計算。
+       NH4+(M=18)で約0.03 を再現。重い分子ほど s0 は小さい=分解が難しい。
+       例: TEA+(M=101) では s0≈0.005 と NH4+ の約1/6。"""
+    return MU_P * (B_H - B_L) / (M_amu * AMU * nu0)
 
 
-def resolution_R(N, nu0, w1, a, b):
-    """分解度 R(N)。a,b は ν0=100 基準値で 1/ν0 自動スケール。"""
+def s0_of(nu0, s0_100=S0_REF):
+    """初速 ν0 での 1往復あたり間隔 s0 ∝ 1/ν0(s0_100 は ν0=100 での値)。"""
+    return s0_100 * NU0_REF / nu0
+
+
+def resolution_R(N, nu0, w1, a, b, s0_100=S0_REF):
+    """分解度 R(N)。s0_100/a/b は ν0=100 基準値で 1/ν0 自動スケール。"""
     sc = NU0_REF / nu0
-    s0, A, B = S0_REF * sc, a * sc, b * sc
+    s0, A, B = s0_100 * sc, a * sc, b * sc
     return s0 * (2 * N + 1) / sqrt(w1 * w1 + (A * N) ** 2 + (B * N) ** 2)
 
 
-def ceiling_R(a, b):
+def ceiling_R(a, b, s0_100=S0_REF):
     """到達天井 R_max = 2 s0 / sqrt(a^2+b^2)。ν0 に依らず一定。"""
-    return 2 * S0_REF / sqrt(a * a + b * b + 1e-18)
+    return 2 * s0_100 / sqrt(a * a + b * b + 1e-18)
 
 
-def n_to_resolve(nu0, w1, a, b, Rtarget=2.0, Nmax=500):
+def n_to_resolve(nu0, w1, a, b, Rtarget=2.0, Nmax=500, s0_100=S0_REF):
     """R=Rtarget に達する最小往復回数 N。届かなければ None。"""
     for N in range(1, Nmax + 1):
-        if resolution_R(N, nu0, w1, a, b) >= Rtarget:
+        if resolution_R(N, nu0, w1, a, b, s0_100) >= Rtarget:
             return N
     return None
 
@@ -76,15 +85,21 @@ def n_to_resolve(nu0, w1, a, b, Rtarget=2.0, Nmax=500):
 # バッチ用メトリクス
 # ===========================================================================
 def budget_metrics(run):
-    """1つの装置設定の分解度バジェット指標。"""
+    """1つの装置設定の分解度バジェット指標。
+       run に M_amu があれば物理から s0 を計算(質量対応)、無ければ NH4+ 基準 0.03。"""
     nu0, w1, a, b = run["nu0"], run["w1"], run["a"], run["b"]
     Nr = run.get("N_round", 10)
-    R = resolution_R(Nr, nu0, w1, a, b)
+    if run.get("M_amu"):
+        s0_100 = s0_from_physics(run["M_amu"], run.get("B_H", 9.4),
+                                 run.get("B_L", 3.1), NU0_REF)
+    else:
+        s0_100 = S0_REF
+    R = resolution_R(Nr, nu0, w1, a, b, s0_100)
     return {
-        "s0[m/s]": round(s0_of(nu0), 4),
+        "s0[m/s]": round(s0_of(nu0, s0_100), 5),
         "R@N": round(R, 3),
-        "ceiling": round(ceiling_R(a, b), 2),
-        "N_to_R2": n_to_resolve(nu0, w1, a, b),
+        "ceiling": round(ceiling_R(a, b, s0_100), 2),
+        "N_to_R2": n_to_resolve(nu0, w1, a, b, s0_100=s0_100),
         "broadening%@R": round((broadening_factor(run["n"], R) - 1) * 100, 1),
     }
 
@@ -141,6 +156,80 @@ def run_batch(config_path):
     return rows
 
 
+# ===========================================================================
+# 実データ解析(フェーズ1の本来の目的)
+# ===========================================================================
+def load_velocity(path, center=True):
+    """1列目の数値(速度シフト[m/s] または TOF)を読む。ヘッダ等は自動スキップ。
+       center=True で中央値を引いて 0 中心に揃える。"""
+    vals = []
+    with open(path, encoding="utf-8-sig") as f:
+        for line in f:
+            tok = line.strip().split(",")[0].strip()
+            if not tok:
+                continue
+            try:
+                vals.append(float(tok))
+            except ValueError:
+                continue
+    arr = np.asarray(vals, dtype=float)
+    if arr.size == 0:
+        raise ValueError(f"{path}: 数値が読めませんでした")
+    if center:
+        arr = arr - np.median(arr)
+    return arr
+
+
+def robust_sigma(data):
+    """RF OFF データから線幅 σ をロバストに推定(1.4826*MAD)。"""
+    mad = np.median(np.abs(data - np.median(data)))
+    return 1.4826 * mad
+
+
+def analyze_data(on_data, sigma, delta, n_candidates):
+    """実データ(0中心の速度シフト点列)に対し K_change, K_comb を計算。"""
+    pr = Priors(sigma=sigma, delta_theory=delta,
+                n_candidates=tuple(n_candidates))
+    kc, kk = log10_bayes_factors(on_data, pr)
+    verdict = "決定的" if kk > 2 else "支持" if kk > 1 else "不十分"
+    return kc, kk, verdict
+
+
+def run_analyze(args):
+    on = load_velocity(args.analyze_on)
+    if args.analyze_off:
+        sigma = robust_sigma(load_velocity(args.analyze_off))
+        src = f"RF OFF ファイル({args.analyze_off})から推定"
+    elif args.sigma:
+        sigma = args.sigma
+        src = "--sigma 指定"
+    else:
+        sys.exit("σが必要です: --analyze-off <RF OFFファイル> か --sigma <値>")
+    if args.delta:
+        delta = args.delta
+    elif args.R and args.fwhm:
+        delta = args.R * args.fwhm
+    else:
+        sys.exit("間隔が必要です: --delta <値> か (--R と --fwhm)")
+    ncs = [int(x) for x in str(args.n).split(",")]
+    kc, kk, verdict = analyze_data(on, sigma, delta, ncs)
+    print("=" * 56)
+    print(" 実データ ベイズ判定")
+    print("=" * 56)
+    print(f"  ONデータ      : {args.analyze_on}  ({on.size} イオン)")
+    print(f"  線幅 σ        : {sigma:.4f} m/s  ({src})")
+    print(f"  間隔 δ        : {delta:.4f} m/s")
+    print(f"  等価プロトン候補: {ncs}")
+    print(f"  分解度 R≈δ/FWHM: {delta/(2.3548*sigma):.2f}")
+    print("-" * 56)
+    print(f"  log10 K_change(広がったか) = {kc:+.1f}")
+    print(f"  log10 K_comb  (コム構造か) = {kk:+.1f}   → {verdict}")
+    print("=" * 56)
+    if kk <= 1:
+        print(" 判定: コムを証明するにはデータ不足。R を上げる(ν0低減/②④)")
+        print("       か、より多くのイオンが必要。")
+
+
 def make_config(path):
     template = {
         "output_csv": "batch_results.csv",
@@ -148,14 +237,19 @@ def make_config(path):
         "trials": 25,
         "sizes": [100, 300, 1000, 3000],
         "seed": 0,
+        "_note": "M_amu/B_H/B_L があれば物理から s0 を計算(質量対応)。"
+                 "無ければ NH4+ 基準 0.03。TEA+ は M=101。",
         "runs": [
-            {"label": "現状", "nu0": 100, "w1": 0.4, "a": 0.03, "b": 0.03,
-             "n": 4, "N_round": 10},
-            {"label": "②④解決", "nu0": 100, "w1": 0.4, "a": 0.005,
-             "b": 0.0003, "n": 4, "N_round": 10},
-            {"label": "②④+ν0低減(50)", "nu0": 50, "w1": 0.4, "a": 0.005,
-             "b": 0.0003, "n": 4, "N_round": 10},
-            {"label": "②④+ν0低減(25)", "nu0": 25, "w1": 0.4, "a": 0.005,
+            {"label": "TEA現状", "nu0": 100, "w1": 0.4, "a": 0.03, "b": 0.03,
+             "n": 9, "N_round": 10, "M_amu": 101, "B_H": 9.4, "B_L": 3.1},
+            {"label": "TEA②④解決", "nu0": 100, "w1": 0.4, "a": 0.005,
+             "b": 0.0003, "n": 9, "N_round": 10, "M_amu": 101},
+            {"label": "TEA②④+ν0低減(25)", "nu0": 25, "w1": 0.4, "a": 0.005,
+             "b": 0.0003, "n": 9, "N_round": 10, "M_amu": 101},
+            {"label": "TEA②④+強勾配(B_L=0.5)", "nu0": 25, "w1": 0.4,
+             "a": 0.005, "b": 0.0003, "n": 9, "N_round": 10,
+             "M_amu": 101, "B_H": 9.4, "B_L": 0.5},
+            {"label": "NH4基準(M指定なし)", "nu0": 100, "w1": 0.4, "a": 0.005,
              "b": 0.0003, "n": 4, "N_round": 10},
         ],
     }
@@ -186,7 +280,7 @@ def launch_gui():
 
     root = tk.Tk()
     root.title("気相NMR 精度設計ツール")
-    root.geometry("980x680")
+    root.geometry("980x820")
     nb = ttk.Notebook(root)
     nb.pack(fill="both", expand=True)
     msg_queue = queue.Queue()
@@ -213,6 +307,9 @@ def launch_gui():
     v_a = labeled_entry(left1, "② 浮遊電場 a", 0.03)
     v_b = labeled_entry(left1, "④ RF誤差 b", 0.03)
     v_n1 = labeled_entry(left1, "等価プロトン n", 4)
+    v_M = labeled_entry(left1, "質量 M [amu]", 101)
+    v_BH = labeled_entry(left1, "高磁場 B_H [T]", 9.4)
+    v_BL = labeled_entry(left1, "低磁場 B_L [T]", 3.1)
 
     def set_preset(a, b):
         v_a.set(str(a)); v_b.set(str(b)); draw_budget()
@@ -236,27 +333,32 @@ def launch_gui():
         try:
             nu0 = float(v_nu0.get()); w1 = float(v_w1.get())
             a = float(v_a.get()); b = float(v_b.get()); n = int(float(v_n1.get()))
+            M = float(v_M.get()); BH = float(v_BH.get()); BL = float(v_BL.get())
         except ValueError:
             return
+        s0_100 = s0_from_physics(M, BH, BL, 100) if M > 0 else S0_REF
         Ns = np.arange(1, 31)
-        Rcur = [resolution_R(N, nu0, w1, a, b) for N in Ns]
-        Rbase = [resolution_R(N, 100, w1, a, b) for N in Ns]
+        Rcur = [resolution_R(N, nu0, w1, a, b, s0_100) for N in Ns]
+        Rbase = [resolution_R(N, 100, w1, a, b, s0_100) for N in Ns]
         ax1.clear()
         ax1.plot(Ns, Rcur, color=TEAL, lw=2.4, label=f"ν0={nu0:.0f} m/s")
         ax1.plot(Ns, Rbase, color=GRAY, lw=1.6, ls="--", label="基準 ν0=100")
         ax1.axhline(2.0, color=CORAL, lw=1.4, ls="--", label="分解閾値 R=2")
         ax1.set_xlabel("往復回数 N"); ax1.set_ylabel("分解度 R = 間隔/線幅")
         ax1.set_ylim(0, 6); ax1.legend(fontsize=8); ax1.grid(alpha=0.25)
-        cR = ceiling_R(a, b); nh = n_to_resolve(nu0, w1, a, b)
-        nh100 = n_to_resolve(100, w1, a, b)
+        cR = ceiling_R(a, b, s0_100)
+        nh = n_to_resolve(nu0, w1, a, b, s0_100=s0_100)
+        nh100 = n_to_resolve(100, w1, a, b, s0_100=s0_100)
+        s0now = s0_of(nu0, s0_100)
         if nh:
             budget_result.set(f"✓ R=2 到達: N={nh} 往復\n天井 R_max≈{cR:.1f}\n"
-                              f"(ν0=100なら N={nh100})\ns0={s0_of(nu0):.3f} m/s")
-            ax1.set_title(f"分解可能 (N={nh}, 天井 {cR:.1f})", color=TEAL)
+                              f"(ν0=100なら N={nh100})\ns0={s0now:.4f} m/s "
+                              f"(M={M:.0f})")
+            ax1.set_title(f"分解可能 (N={nh}, 天井 {cR:.1f}, M={M:.0f})", color=TEAL)
         else:
             budget_result.set(f"✗ 分解不可\n天井 R_max≈{cR:.2f} < 2\n"
-                              f"→ まず ②④(a,b) を下げる")
-            ax1.set_title(f"分解不可 (天井 {cR:.2f}<2)", color=CORAL)
+                              f"→ まず ②④(a,b) を下げる\ns0={s0now:.4f} m/s")
+            ax1.set_title(f"分解不可 (天井 {cR:.2f}<2, M={M:.0f})", color=CORAL)
         fig1.tight_layout(); cv1.draw()
 
     # =====================================================================
@@ -373,6 +475,63 @@ def launch_gui():
             pass
         root.after(150, poll)
 
+    # ---- 実データ判定(タブ2の左パネル末尾に追加) ----
+    ttk.Separator(left2, orient="horizontal").pack(fill="x", pady=8)
+    ttk.Label(left2, text="実データ判定", font=("", 11, "bold")).pack(anchor="w")
+    data_paths = {"on": None, "off": None}
+    data_lbl = tk.StringVar(value="ファイル未選択")
+
+    def pick_file(key, title):
+        from tkinter import filedialog
+        p = filedialog.askopenfilename(title=title)
+        if p:
+            data_paths[key] = p
+            on = os.path.basename(data_paths["on"]) if data_paths["on"] else "—"
+            off = os.path.basename(data_paths["off"]) if data_paths["off"] else "—"
+            data_lbl.set(f"ON: {on}\nOFF: {off}")
+
+    bf = ttk.Frame(left2); bf.pack(anchor="w", pady=2)
+    ttk.Button(bf, text="ON読込", width=9,
+               command=lambda: pick_file("on", "RF ON データ(1列)")).pack(side="left", padx=2)
+    ttk.Button(bf, text="OFF読込(σ用)", width=12,
+               command=lambda: pick_file("off", "RF OFF データ(任意)")).pack(side="left", padx=2)
+    ttk.Label(left2, textvariable=data_lbl, foreground=GRAY,
+              wraplength=220, justify="left").pack(anchor="w")
+
+    def real_data_k():
+        if not data_paths["on"]:
+            messagebox.showwarning("", "ON データを選んでください"); return
+        try:
+            FWHM, R, n, _, _ = read_bayes()
+        except ValueError:
+            return
+        try:
+            on = load_velocity(data_paths["on"])
+            sigma = (robust_sigma(load_velocity(data_paths["off"]))
+                     if data_paths["off"] else FWHM / 2.3548)
+        except Exception as e:
+            messagebox.showerror("読み込みエラー", str(e)); return
+        delta = R * FWHM
+        kc, kk, verdict = analyze_data(on, sigma, delta, [n])
+        B = broadening_factor(n, R)
+        x = np.linspace(on.min() - 0.2, on.max() + 0.2, 600)
+        w = pascal_weights(n); off_ = mtotal_offsets(n)
+        ax2a.clear()
+        ax2a.hist(on, bins=60, density=True, color=CORAL, alpha=0.45,
+                  label="実データ")
+        ax2a.plot(x, comb_density(x, 0, delta, sigma, w, off_), color=TEAL,
+                  lw=2, label="M1: コム")
+        ax2a.plot(x, norm.pdf(x, 0, sigma * B), color=PURPLE, lw=1.6, ls="--",
+                  label="M2: 広がり")
+        ax2a.set_xlabel("速度シフト [m/s]"); ax2a.legend(fontsize=8)
+        ax2a.set_title(f"実データ {on.size}点  log10 K_comb={kk:.1f} ({verdict})")
+        bayes_status.set(f"実データ {on.size}イオン\nσ={sigma:.3f}, δ={delta:.3f}\n"
+                         f"log10 K_comb={kk:.1f} → {verdict}")
+        fig2a.tight_layout(); cv2a.draw()
+
+    ttk.Button(left2, text="実データで K 判定",
+               command=real_data_k).pack(anchor="w", pady=4)
+
     draw_budget()
     single_k()
     poll()
@@ -384,11 +543,22 @@ def main():
     ap = argparse.ArgumentParser(description="気相NMR 精度設計ツール")
     ap.add_argument("--batch", metavar="config.json", help="バッチ実行")
     ap.add_argument("--make-config", metavar="config.json", help="設定の雛形を生成")
+    ap.add_argument("--analyze-on", metavar="on.csv",
+                    help="実データ(RF ON)をベイズ判定")
+    ap.add_argument("--analyze-off", metavar="off.csv",
+                    help="RF OFF データから線幅σを推定")
+    ap.add_argument("--sigma", type=float, help="線幅σ[m/s](--analyze-off の代わり)")
+    ap.add_argument("--delta", type=float, help="間隔δ[m/s]")
+    ap.add_argument("--R", type=float, help="分解度R(--fwhm と併用で δ=R*FWHM)")
+    ap.add_argument("--fwhm", type=float, help="線幅FWHM[m/s]")
+    ap.add_argument("--n", default="4", help="等価プロトン候補(例 9,6)")
     args = ap.parse_args()
     if args.make_config:
         make_config(args.make_config)
     elif args.batch:
         run_batch(args.batch)
+    elif args.analyze_on:
+        run_analyze(args)
     else:
         launch_gui()
 
