@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>気相NMR分光法 ― 精度向上に向けた研究状況とロードマップ</title>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f7f6f2; --bg3:#efede6; --fg:#1c1c1a; --fg2:#5f5e5a; --fg3:#8a8980;
+  --border:rgba(0,0,0,0.12); --border2:rgba(0,0,0,0.22);
+  --teal:#0f6e56; --teal2:#1d9e75; --coral:#993c1d; --coral2:#d85a30; --purple:#534ab7;
+  --info-bg:#e6f1fb; --info-fg:#0c447c; --warn-bg:#faeeda; --warn-fg:#854f0b;
+  --ok-bg:#e1f5ee; --ok-fg:#0f6e56; --bad-bg:#faece7; --bad-fg:#993c1d;
+}
+@media (prefers-color-scheme: dark){
+:root{
+  --bg:#1a1a18; --bg2:#232320; --bg3:#2c2c29; --fg:#ececdf; --fg2:#b4b2a9; --fg3:#888780;
+  --border:rgba(255,255,255,0.13); --border2:rgba(255,255,255,0.25);
+  --teal:#5dcaa5; --teal2:#5dcaa5; --coral:#f0997b; --coral2:#d85a30; --purple:#afa9ec;
+  --info-bg:#0c2740; --info-fg:#b5d4f4; --warn-bg:#3a2a0c; --warn-fg:#fac775;
+  --ok-bg:#0c3328; --ok-fg:#9fe1cb; --bad-bg:#3a1810; --bad-fg:#f0997b;
+}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  line-height:1.8;font-size:16px;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+h1{font-size:26px;font-weight:600;line-height:1.4;margin:0 0 6px;}
+h2{font-size:20px;font-weight:600;margin:48px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+h3{font-size:16px;font-weight:600;margin:28px 0 8px;color:var(--teal);}
+.sub{color:var(--fg2);font-size:14px;margin:0 0 4px;}
+.lead{color:var(--fg2);font-size:15px;}
+p{margin:10px 0;}
+code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:0.92em;background:var(--bg3);
+  padding:1px 5px;border-radius:4px;}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;}
+th{background:var(--bg2);font-weight:600;}
+.formula{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:14px 18px;margin:16px 0;text-align:center;font-size:18px;overflow-x:auto;}
+.formula .small{font-size:13px;color:var(--fg2);}
+.callout{border-radius:10px;padding:12px 16px;margin:16px 0;font-size:14.5px;border:1px solid var(--border);}
+.callout.info{background:var(--info-bg);color:var(--info-fg);border-color:transparent;}
+.callout.warn{background:var(--warn-bg);color:var(--warn-fg);border-color:transparent;}
+.callout b{font-weight:600;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:18px 0;}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;
+  background:var(--bg3);color:var(--fg2);margin-right:6px;}
+.tag.t1{background:var(--ok-bg);color:var(--ok-fg);}
+.tag.t2{background:var(--info-bg);color:var(--info-fg);}
+.toolbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin:20px 0;}
+.toolbox h3{margin-top:0;color:var(--fg);}
+.ctrl{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px;}
+.ctrl label{color:var(--fg2);min-width:150px;}
+.ctrl output{font-weight:600;min-width:64px;text-align:right;}
+input[type=range]{flex:1;accent-color:var(--teal2);height:4px;}
+.verdict{font-size:13.5px;text-align:center;padding:8px;border-radius:8px;margin:10px 0;font-weight:500;}
+.chartbox{position:relative;width:100%;height:300px;}
+canvas{display:block;width:100%;height:100%;}
+.svgbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin:18px 0;}
+.svgbox svg{width:100%;height:auto;}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--fg2);margin-bottom:6px;}
+.legend span{display:flex;align-items:center;gap:5px;}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.refs{font-size:13px;color:var(--fg2);}
+.refs li{margin:5px 0;}
+.refs a{color:var(--teal);text-decoration:none;}
+.refs a:hover{text-decoration:underline;}
+td a{color:var(--teal);text-decoration:none;}
+td a:hover{text-decoration:underline;}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);color:var(--fg3);font-size:12.5px;}
+.nav{font-size:13px;color:var(--fg2);background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:14px 18px;margin:20px 0;}
+.nav a{color:var(--teal);text-decoration:none;}.nav a:hover{text-decoration:underline;}
+.nav ol{margin:6px 0;padding-left:22px;} .nav li{margin:2px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="sub">研究提案資料 ― 冨宅喜代一氏 開発「気相NMR分光法」</p>
+<h1>気相NMR分光法の精度向上に向けた<br>研究状況とロードマップ</h1>
+<p class="lead">質量選別した気相分子イオンにNMR(核磁気共鳴)構造解析を接ぎ木する「気相NMR分光法(磁気共鳴加速法)」について、原理・現状・残る課題を整理する。精度に効く因子を10項目に体系化したうえで、当面の焦点となる検討項目①〜④に絞り込み、精度向上に向けた具体的なロードマップを示す。</p>
+
+<div class="card" style="border-left:4px solid var(--teal);">
+<h2 style="margin:0 0 10px;border:none;padding:0;font-size:18px;">要旨(アブストラクト)</h2>
+<p style="margin-top:0;">本提案は、冨宅喜代一氏が世界で唯一開発した<b>気相NMR分光法(磁気共鳴加速法)</b> ― 質量選別した気相分子イオンを超伝導磁石内で往復させ、核スピン状態を飛行時間(TOF)の分裂として読み、質量分析(MS)に<b>化学シフトという直接的な構造情報</b>を付与する手法 ― について、<b>原理実証(PoC)を完遂し精度を実用域へ引き上げる</b>ための課題整理と技術ロードマップである。</p>
+
+<p style="font-size:13.5px;color:var(--fg2);background:var(--bg3);border-radius:8px;padding:10px 14px;">※ <b>凡例(以下この記号で参照):</b> 精度の律速因子を <b>①速度分布の冷却</b>・<b>②浮遊電場の抑制</b>・<b>③イオン数と統計</b>・<b>④RF反転の忠実度</b> の4項に絞る(本文 §5・§7 で詳述)。<b>R</b>=分解度(=ピーク間隔 ÷ 線幅。R&gt;2 で分解可)、<b>s<sub>0</sub></b>≈0.03 m/s=1往復あたりのピーク間隔、<b>a・b</b>=それぞれ②・④が1往復ごとに線幅へ加える広がり、<b>ν<sub>0</sub></b>=イオンの初速。</p>
+
+<p><b>現状の課題:</b> PoCはトリエチルアミンイオンで「TOF幅約10%の広がり」までを観測したが、これは分解されたスペクトルではなく<b>未分解の包絡線</b>(分解度 R=間隔/線幅 ≈ 0.5)に留まる。精度は不等式 <b>R = δ/w &gt; 2</b> に凝縮され、現状の天井は R<sub>max</sub>≈1.6。律速は<b>②浮遊電場</b>と<b>④RF反転忠実度</b>の2項で、特に<b>πパルスの大きさ・共鳴周波数・電気的副作用がいずれもイオン自身で未検証</b>であり、唯一の正の対照(電子スピン)も null だった点が、観測を「核スピン分極の証拠」と断じきれない根本原因である。</p>
+
+<p><b>必要な技術構築の優先度:</b> R<sub>max</sub>=2s<sub>0</sub>/√(a²+b²) で②④は分母を取り合う。<b>(1) ④を断熱パッセージ化</b>(新規ハード最小)して単発反転忠実度 f≧0.99 にすれば b は分母から外れる ― ④は安価に飽和する。<b>(2) R の天井を実際に上げるのは②</b>(クライオ運転+組立前Ar⁺洗浄+イオン束プローブのML自動補償)で、a を1桁下げれば <b>R<sub>max</sub>≈1.6 → 12〜20</b>。<b>(3) ③統計の入れ替え</b>(個々の到達時刻のベイズ再解析)はほぼ無料で既存データから有意性を回収。加えて<b>初速 ν<sub>0</sub> の低減</b>は冷却①を正面突破せず R を稼ぐ最安の道。①(サブmK冷却)は最終手段。</p>
+
+<p><b>まず調査すべき第三者技術:</b> 物理が同型の<b>Penningトラップ精密測定(BASE 等)</b>=遠隔冷却・非破壊スピン読み出しの宝庫、<b>イオントラップ量子計算の表面科学</b>(Ar⁺ミリングで電場ノイズ約100倍減・ML動的補償)、<b>中性子スピンフリッパー</b>(飛行中・固定通過で反転 0.9999=断熱化の存在証明)、<b>GRAPE/Spinach 最適制御</b>。これらは競合ではなく<b>技術供給源</b>であり、各ボトルネックに移植可能な実数を持つ。</p>
+
+<p style="margin-bottom:0;"><b>この技術の競合:</b> <b>同一原理(気相イオンのNMR)の直接競合は世界に存在しない</b>(独自性=最大の強み、反面=独力で検証せねばならないリスク)。実質的競合は同じ目的(MSへの構造解析能付与)を別手段で狙う<b>クライオIRイオン分光</b>(2025年に市販IM-MSへ実装=最警戒)・<b>イオンモビリティ(IM-MS)</b>・<b>電子系開裂(ECD/ETD)</b>。いずれも振動・断面積・開裂という<b>間接プロキシ</b>で、NMRの化学シフトとは<b>直交・相補</b>。差別化の核は「IRは振動指紋、NMRは化学シフト」であり、提案の説得力は唯一性より<b>現実的なロードマップでの原理実証</b>で決まる。</p>
+</div>
+
+<div class="nav">
+<b>目次</b>
+<ol>
+<li><a href="#s1">エグゼクティブサマリー</a></li>
+<li><a href="#s2">背景 ― なぜ気相NMRか</a></li>
+<li><a href="#s3">検出原理 ― 磁気共鳴加速法</a></li>
+<li><a href="#s4">現状 ― PoCの到達点と未達</a></li>
+<li><a href="#s5">課題の全体像 ― 精度に効く10の因子と絞り込み</a></li>
+<li><a href="#s6">精度の再定義 ― 分解度の不等式</a></li>
+<li><a href="#s7">検討項目①〜④の状況</a></li>
+<li><a href="#s8">ロードマップ</a></li>
+<li><a href="#s9">決定的テスト(go/no-go)</a></li>
+<li><a href="#s10">競合状況と差別化</a></li>
+<li><a href="#s11">PoCで精度が落ちた可能性のある箇所(仮説)</a></li>
+<li><a href="#s12">文献・特許・研究費</a></li>
+</ol>
+</div>
+
+<h2 id="s1">1. エグゼクティブサマリー</h2>
+<p>質量分析(MS)は質量(m/z)しか返さず、分子の<b>構造</b>は直接わからない。本手法は、質量選別した気相分子イオンを超伝導磁石内のイオントラップ中で往復させ、核スピン状態を<b>飛行時間(TOF)の分裂</b>として読み取ることで、MSに構造解析能力を付与する。原理・要素技術・特許は確立済みだが、<b>決定的な原理実証(共鳴特異的なスペクトル取得)は、装置移設・改修により未完</b>。</p>
+<p>本資料ではまず、精度に効きうる因子を<b>10項目</b>に体系化し(§5)、そのうち<b>分解度を今すぐ動かす①〜④に焦点を絞る</b>。その根拠は、「精度向上」という課題が<b>ひとつの不等式 — 分解度 R = 間隔 ÷ 線幅 &gt; 2 — に凝縮できる</b>こと(§6)、そして①〜④がその式の各項に厳密対応することにある。進め方は、<b>実測した誤差バジェットが指す律速項を叩く</b>(§8)。</p>
+
+<h2 id="s2">2. 背景 ― なぜ気相NMRか</h2>
+<table>
+<tr><th>手法</th><th>得られる情報</th><th>制約</th></tr>
+<tr><td>質量分析(MS)</td><td>質量 m/z(高感度・微量可)</td><td>構造は直接得られない</td></tr>
+<tr><td>溶液NMR</td><td>構造(環境×個数の指紋)</td><td>多量試料が必要・質量選別不可</td></tr>
+<tr><td><b>気相NMR(本手法)</b></td><td><b>質量選別したイオンの構造指紋</b></td><td>(開発中)</td></tr>
+</table>
+<p>溶液NMRは「どの周波数(化学環境)に、何個の等価Hがあるか」という構造の指紋を返すが、溶液中の多量の分子を要する。本手法はこれを<b>質量選別した気相イオン一種</b>について実現し、MSとタンデム(直列)化することを狙う。生命科学を含む多くの分野で、気相イオンの構造情報の重要性が増していることが動機である。</p>
+
+<h2 id="s3">3. 検出原理 ― 磁気共鳴加速法</h2>
+<p>高磁場(9.4 T)と低磁場(3.1 T)の均一磁場領域を傾斜磁場(最大 25 T/m)でつないだ専用超伝導磁石のボーア内に、細長いイオントラップ(NMRセル)を設置する。極低温に冷やしたイオン束をセル内で往復させ、両端のRFコイルを通過するたびに共鳴周波数のπパルスを照射して核スピンを反転させる。</p>
+
+<div class="svgbox" id="schematic"></div>
+
+<p>核磁気モーメントと傾斜磁場の相互作用力(Stern-Gerlach力)は、往復のたびにスピンを反転させることで<b>常に同じ向き</b>に働き、スピン状態の異なるイオンが飛行時間上で分裂する(核スピン分極)。この分裂幅は次式で<b>厳密に予測可能</b>である。</p>
+
+<div class="formula">
+&Delta;&nu; = n &middot; (&mu;<sub>p</sub> / M&nu;<sub>0</sub>) &middot; (B<sub>H</sub> &minus; B<sub>L</sub>) &middot; (2N+1)<br>
+<span class="small">n: 等価プロトン数(未知)／ M: 質量(MSが与える)／ &nu;<sub>0</sub>: 初速／ B<sub>H,L</sub>: 高・低磁場／ N: 往復回数</span>
+</div>
+
+<p><b>n 以外はすべて既知</b>(物理定数・MSによる質量・校正・計数)であるため、分裂幅を測れば等価プロトン数 n が定量的に逆算できる。<b>式に質量 M が入る</b>点が重要で、MS が M を確定するからこそ、この定量計算が閉じる ― 本手法がMSとのタンデムを前提とする数理的根拠である。</p>
+
+<h2 id="s4">4. 現状 ― PoCの到達点と未達</h2>
+<div class="card">
+<p><span class="tag t1">達成済み</span> 傾斜磁場型超伝導磁石の設計・製作。TS-PSW/進行波型多段減速器、速度選別、速度分散補償器(VDC)による<b>並進サブmK級(速度幅 0.4 m/s)</b>の極低温イオン生成。超高真空対応RFコイル・同調回路の開発。シミュレーションによるICRセルをイオン源とする構成の成立性確認。</p>
+<p><span class="tag">未達</span> トリエチルアミンイオン(TEA⁺)で 5往復・5回RF励起により <b>TOF幅約10%の広がり</b>(分極の兆候)を観測したが、<b>分解されたスペクトルではなく未分解の広がり</b>に留まり、統計的有意性も判定できず。分子研の建物改修で実験継続が困難になり、<b>周波数掃引による共鳴特異性の確認(決定的テスト)は未実施</b>。</p>
+</div>
+<div class="callout info">観測された「10%の広がり」は、本来分裂しているはずのピーク群(コム)が、冷却・制御の不足で分解できず<b>包絡線として融合した姿</b>と解釈できる。すなわち現状の課題は「広がりを大きくする」ことではなく「<b>コムを分解する</b>」ことに集約される。これが次節以降の「精度=分解度」という捉え方の出発点になる。</div>
+
+<h2 id="s5">5. 課題の全体像 ― 精度に効く10の因子と絞り込み</h2>
+<p>現状の課題(コムの未分解)を踏まえ、精度に効きうる因子を体系的に洗い出すと全部で10項目あり、性格ごとに4群に分かれる。①②は線幅を決める2軸、③〜⑥は「測定の成立」、⑦⑧は「能力の拡張」、⑨⑩は「開発の基盤」である。</p>
+<table>
+<tr><th>群</th><th>項目</th><th>役割</th></tr>
+<tr><td>イオンを整える</td><td><b>① 速度分布の狭帯化</b>／<b>② 電位分布の清浄化</b></td><td>線幅の床と天井</td></tr>
+<tr><td>測定を成立させる</td><td><b>③ イオン数・統計</b>／<b>④ RF忠実度・同期</b>／⑤ スピン緩和・真空／⑥ 磁場安定性</td><td>検出力・天井・コヒーレンス・周波数精度</td></tr>
+<tr><td>能力を拡張する</td><td>⑦ イオン源汎用化(ESI)／⑧ 測定方式(FT化)</td><td>何を測れるか・スループット</td></tr>
+<tr><td>開発を回す</td><td>⑨ シミュレーション主導／⑩ 継続的な実験環境</td><td>開発基盤・運営</td></tr>
+</table>
+
+<p>各項目の寄与を、<b>原理実証フェーズ(いま)</b>と<b>実用化フェーズ(将来)</b>で見積もって比較する(定性的なめやす)。①〜④が原理実証フェーズの上位を占めることが、4項目に絞る根拠を可視化している。</p>
+
+<div class="toolbox">
+<h3>検討項目の寄与度 ― フェーズ別</h3>
+<div class="legend" style="margin-bottom:10px;">
+<span><span class="sw" style="background:#1d9e75;"></span>原理実証フェーズ(いま・塗り)</span>
+<span><span class="sw" style="background:transparent;border:1.5px solid #d85a30;"></span>実用化フェーズ(将来・枠)</span>
+<span><span class="sw" style="background:rgba(29,158,117,0.18);"></span>選定した①〜④</span>
+</div>
+<div class="chartbox" style="height:470px;"><canvas id="factorChart"></canvas></div>
+</div>
+
+<h3>①〜④を当面の焦点とする3つの根拠</h3>
+<ol>
+<li><b>原理実証フェーズの寄与の約75%</b>(グラフ上位4本)。残り6項目の合計が約25%。</li>
+<li><b>分解度の不等式の各項に直接対応する</b>(§6で詳述) ― ①=線幅の床、②④=天井、③=検出力。精度を「いま」動かすレバーそのもの。</li>
+<li><b>最新文献で叩ける</b> ― 共同冷却・表面処理・尤度比検定・複合/断熱パルスなど、他分野から移植可能な具体策が揃う。</li>
+</ol>
+
+<h3>⑤〜⑩を「今は外した」理由(放棄ではない)</h3>
+<table>
+<tr><th>項目</th><th>今は外した理由</th><th>引き上げ時期</th></tr>
+<tr><td>⑤ スピン緩和・真空</td><td>②と真空管理を共有。プロトン核スピンは緩和が遅く現時点では従属的(実は<b>使えるNの上限</b>を縛る)</td><td>多N・長時間化で効く(フェーズ2以降に監視)</td></tr>
+<tr><td>⑥ 磁場安定性</td><td>化学シフト(ppm)分解という<b>"次段階"の天井</b>。今のコム分解(Δν~m/s)には過剰精度</td><td>化学シフト分解を狙う段階</td></tr>
+<tr><td>⑦ イオン源(ESI)</td><td>「何を測れるか」を決める。実用化フェーズで<b>重み最大</b></td><td>原理実証後、本命応用へ</td></tr>
+<tr><td>⑧ 測定方式(FT化)</td><td>スループット。③と掛け算で測定時間を決める</td><td>方式検討は早期・実装は中期</td></tr>
+<tr><td>⑨ シミュレーション</td><td>要素技術というより<b>開発基盤</b>。フェーズ0でモデル統合に活用</td><td>横断的に常時</td></tr>
+<tr><td>⑩ 実験環境の継続</td><td>非技術だが最大級。移設は⑤⑥をリセットする</td><td>技術と同列・常時</td></tr>
+</table>
+
+<div class="callout info"><b>全体の見取り図:</b> ⑤⑥は実は同じ誤差バジェットの拡張項(⑤は使えるNの上限、⑥は w<sub>6</sub>)で、いわば<b>"精度の二次・次段階"</b>。⑦⑧は<b>"能力拡張"</b>で実用化フェーズに重みが移る(グラフで右肩上がり)。⑨⑩は<b>"開発基盤"</b>。よって当面は①②③④に資源集中し、⑤〜⑩は⑨(シミュレーション)で監視しつつフェーズ進行に応じて引き上げる。なお⑩はPoCが止まった直接原因であり、技術と同列で常時管理する。</div>
+
+<h2 id="s6">6. 精度の再定義 ― 分解度の不等式</h2>
+<p>§5の10因子のうち、精度(分解度)を直接決めるのが①〜④である。これを定量的に裏づける。精度向上は、次のひとつの条件に凝縮される。</p>
+<div class="formula">
+R = 間隔 &delta;(N) / 線幅 w(N) &gt; 2 &nbsp;(分解の条件)
+</div>
+<p>そして検討項目①〜④は、この式の各項に厳密対応する。</p>
+
+<h3>分子:間隔(既知・計算可能)</h3>
+<div class="formula">
+&delta;(N) = s<sub>0</sub> &times; (2N+1), &nbsp; s<sub>0</sub> = &mu;<sub>p</sub>(B<sub>H</sub>&minus;B<sub>L</sub>)/(M&nu;<sub>0</sub>)
+<br><span class="small">レバー: N を増やす／&nu;<sub>0</sub> を下げる(∝1/&nu;<sub>0</sub>)。NH₄⁺・N=5・&nu;<sub>0</sub>=100 m/s で &delta; ≈ 0.33 m/s(s<sub>0</sub> ≈ 0.03)</span>
+</div>
+
+<h3>分母:線幅(誤差バジェット)</h3>
+<div class="formula">
+w(N) = &radic;[ w<sub>1</sub>² + (aN)² + (bN)² + w<sub>6</sub>² ]
+<br><span class="small">w<sub>1</sub>:①冷却(床) ／ a:②浮遊電場 ／ b:④RF誤差(共に per-pass で累積) ／ w<sub>6</sub>:⑥磁場</span>
+</div>
+
+<h3>厳密な帰結 ― R には天井がある</h3>
+<p>大きな N では分子・分母とも N に比例するため R は飽和する:</p>
+<div class="formula">R<sub>max</sub> = 2 s<sub>0</sub> / &radic;(a² + b²)</div>
+<p><b>1往復あたりの誤差(a,b)が 1往復あたりの間隔 s<sub>0</sub> を超えると、N をいくら増やしても永遠に分解できない。</b>①冷却(w<sub>1</sub>)は「天井に届く速さ」を、②④(a,b)は「天井の高さ」を決める。下のツールで関係を確認できる。</p>
+
+<div class="toolbox">
+<h3>【シミュレーション】分解度バジェット設計ツール</h3>
+<p style="font-size:13px;color:var(--fg2);margin-top:0;">w₁(冷却)・a(浮遊電場)・b(RF誤差)を変え、R(N)曲線・分解閾値R=2・到達天井を見る。<b>a,b は実測前の仮値</b>。</p>
+<div class="ctrl"><label>① 冷却 線幅 w₁</label><input type="range" id="w1" min="0.05" max="0.6" step="0.01" value="0.4"><output id="w1o">0.40 m/s</output></div>
+<div class="ctrl"><label>② 浮遊電場 a /往復</label><input type="range" id="aa" min="0" max="0.08" step="0.002" value="0.03"><output id="aao">0.030</output></div>
+<div class="ctrl"><label>④ RF誤差 b /往復</label><input type="range" id="bb" min="0" max="0.08" step="0.002" value="0.03"><output id="bbo">0.030</output></div>
+<div class="verdict" id="verdict"></div>
+<div class="chartbox"><canvas id="rChart"></canvas></div>
+</div>
+
+<h2 id="s7">7. 検討項目①〜④の状況</h2>
+<table>
+<tr><th>項目</th><th>式の中の役割</th><th>現状</th><th>最新文献ヒント</th><th>目標</th></tr>
+<tr><td><b>① 冷却</b><br><span class="tag t2">床</span></td><td>w₁。天井に届く速さ</td><td>VDCで0.4 m/s達成</td><td>共同冷却(Ca⁺結晶, 119 amuで実証)／ν₀低減</td><td>w₁ &lt; δ(N_opt)/2</td></tr>
+<tr><td><b>② 浮遊電場</b><br><span class="tag t2">天井</span></td><td>a。per-pass広がり</td><td>ベーキングで対処(要再考)</td><td>ML自動補償／Ar⁺ミリング(最大100倍低減)／<b>ベークは逆効果の警告</b></td><td>a ≪ s₀</td></tr>
+<tr><td><b>③ イオン数</b><br><span class="tag">検出力</span></td><td>w に入らず。検出可否</td><td>計数型・有意性判定不能</td><td>尤度比検定／単一イオンMS(I2MS)思想</td><td>パワー解析で必要ショット数を逆算</td></tr>
+<tr><td><b>④ RF誤差</b><br><span class="tag t2">天井</span></td><td>b。per-pass広がり</td><td>矩形πを水で校正(非ロバスト)</td><td>複合/断熱パルス(中性子で0.9995実証)／GRAPE</td><td>b ≪ s₀(忠実度&gt;99.8%)</td></tr>
+</table>
+<div class="callout warn"><b>優先順位の再重み付け:</b> 寄与度グラフ(§5)では①②③を上位としたが、<b>分解能(天井)の観点では②④の重みが上がる</b>。a,b が s₀ を超えると冷却もNも効かなくなるためである。さらに、②の定石とされてきたベーキングは炭化水素汚染を熱変成・固着させ<b>逆にノイズを増やし得る</b>(文献の警告)点に注意。</div>
+
+<h2 id="s8">8. ロードマップ ― 安い順に、モデル駆動で</h2>
+
+<div class="callout info"><b>第2回 定量調査(2026-06)で戦略が更新:</b> 文献から実数を取得した結果 ―
+<b>④</b> B₁=100 mGでは矩形πは章動0.3πで原理的に不可 → <b>B₁を300 mGに上げ断熱パッセージ化</b>で infidelity 3×10⁻⁴(b≈10⁻⁵≪s₀)。
+<b>②</b> in-situ補償+軽洗浄+クライオで <b>~10 mV/m → a≈s₀/6</b>。
+<b>③</b> 現状R≈0.5では <b>点あたり~2,000カウント</b>必要だが、必要数は<b>1/R⁴</b>で激減。
+<b>①</b> バルク冷却ではw₁&lt;0.4 m/sは不可 → <b>ν₀低減でRを稼ぐ</b>方が安い(下記ツール)。</div>
+
+<div class="card">
+<h3 style="margin-top:0;">フェーズ0(いま・ほぼ無料)― 誤差バジェットモデルの確定</h3>
+<p>§6のR(N)モデルを既存のSIMION+スピンシミュレーションに統合。<b>a,b を既存データ/軽い追試で実測</b>して仮値を置き換え、天井 R<sub>max</sub> を実数として算出する。これが全ての前提。</p>
+</div>
+<div class="card">
+<h3 style="margin-top:0;">フェーズ1(いま・ほぼ無料)― 統計を入れ替える(③)</h3>
+<p>既存TEA⁺の「10%広がり」を、<b>既知のパスカル比を事前分布にしたベイズ因子</b>で再解析(個々のイオン到達時刻を生データとして使用)。掃引のmultiplicity penaltyもモデル内で回収。パワー解析で必要ショット数を算出。</p>
+<p style="font-size:13.5px;"><b>▶ 実装:</b> <a href="https://github.com/HikaVn/gas-phase-nmr-proposal/blob/main/bayes_comb_reanalysis.py"><b>ベイズ再解析シミュレーター(Python)</b></a> ― 等強度2ガウス・Poisson計数モデルで、TOF分裂の有意性(ベイズ因子・必要ショット数)を試算するスクリプト。</p>
+</div>
+<div class="card">
+<h3 style="margin-top:0;">フェーズ2(安い)― 分離測定で天井を測る(②④)</h3>
+<p>RF OFF・N可変 → a(浮遊電場の per-pass 率)。RF off-resonance・N可変 → b(RFの電場副作用)。on-resonance の信号減衰 → π忠実度。<b>天井 R<sub>max</sub> = 2s₀/√(a²+b²) の実数を確定</b>する。</p>
+</div>
+<div class="card">
+<h3 style="margin-top:0;">フェーズ3(中コスト)― <span style="color:var(--coral2)">まず</span>天井を上げる(②④)</h3>
+<p><b>順序が決定的:ν₀低減は天井を上げないので、先に②④で天井を上げる。</b> ④は<b>矩形π→断熱パッセージ(B₁を200–300 mGに増、掃引帯域は必要最小限)</b>で b を下げ、②は<b>クライオ運転+組立前Ar⁺洗浄+イオン束プローブのML浮遊電位補償</b>で a を下げる。</p>
+
+<p style="margin-top:14px;"><b>R<sub>max</sub> 期待値(文献ベース・第3回調査):</b> ②④は分母 √(a²+b²) を取り合うため、<b>大きい方が天井を支配</b>する。④を断熱化すれば b は a より十分小さくでき(下記)、<b>天井は実質 ② が決める</b>。</p>
+
+<table style="margin-top:8px;">
+<tr><th>シナリオ</th><th>② の対策</th><th>電場振幅 低減</th><th>a [m/s/pass]</th><th>R<sub>max</sub><br><span style="font-weight:400;font-size:12px;">(b=3×10⁻⁴ 固定)</span></th></tr>
+<tr><td>現状</td><td>未対策</td><td>1×</td><td>0.030</td><td>2.0</td></tr>
+<tr><td>保守</td><td>クライオ単独</td><td>~3×</td><td>0.010</td><td>6.0</td></tr>
+<tr><td><b>中庸</b></td><td><b>クライオ + Ar⁺ミリング</b></td><td>~10×</td><td>0.003</td><td><b>約20</b></td></tr>
+<tr><td>楽観</td><td>+ ML動的補償</td><td>~30×</td><td>0.001</td><td>約58</td></tr>
+</table>
+
+<div class="callout warn" style="margin-top:12px;"><b>④の飽和 ― 投資判断の急所:</b> a=0.005 を固定すると、単発反転忠実度 f を上げても R<sub>max</sub> はほぼ一定(f=0.85→8.9、f=0.99→12.0、f=0.9999→12.0)。<b>④は f≳0.99 に乗せれば十分</b>で、それ以上の超高忠実度は②(a低減)と組まない限り R に反映されない。<b>④は「安く先に天井から外す」、R を実際に上げるのは②</b> ― これがコスト配分の核心。<br><b>換算の注意:</b> a は静的浮遊場でなく<b>パス間で変化するドリフト/ゆらぎ成分</b>のみ(往復+両端π反転で直流成分は相殺)。上表は低減「倍率」を現状 a に掛けた比率法で、絶対値は実機検証を要する。</div>
+</div>
+<div class="card">
+<h3 style="margin-top:0;">フェーズ4(中コスト)― <span style="color:var(--coral2)">次に</span>ν₀低減でRを稼ぐ(①の迂回)</h3>
+<p>②④で天井を上げた後、<b>ν₀ を 100→25 m/s に下げると間隔 s₀∝1/ν₀ が広がり、R=2到達が N=13→3 に前倒し</b>。最難関の①(サブmK冷却)を正面突破せず、減速でRを稼ぐ。低Nは④の累積誤差も機械的負担も軽減。制約: ν₀ ≳ 数×w₁(単方向ビーム維持)。下のツールで「現状」→「②④解決後」を切り替え、ν₀を動かして確認できる。</p>
+</div>
+
+<div class="toolbox">
+<h3>【シミュレーション】ν₀低減でRを稼ぐ ― 順序の検証</h3>
+<p style="font-size:13px;color:var(--fg2);margin-top:0;">「現状」は天井1.4でν₀を下げても✗。「②④解決後」を押すと天井12になり、ν₀低減でR=2到達Nが前倒しされる(<span style="color:#1d9e75">緑</span>=現ν₀、<span style="color:#888780">灰破線</span>=ν₀100基準、<span style="color:#d85a30">橙破線</span>=R=2)。</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+<button id="v2Now" style="font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--fg);cursor:pointer;">現状 (a=b=0.03)</button>
+<button id="v2Fix" style="font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid var(--teal2);background:var(--ok-bg);color:var(--ok-fg);cursor:pointer;">②④解決後 (a=0.005, b=0.0003)</button>
+</div>
+<div class="ctrl"><label>初速 ν₀</label><input type="range" id="v2v0" min="10" max="150" step="5" value="100"><output id="v2v0o">100 m/s</output></div>
+<div class="ctrl"><label>① 冷却 w₁</label><input type="range" id="v2w1" min="0.05" max="0.6" step="0.01" value="0.4"><output id="v2w1o">0.40 m/s</output></div>
+<div class="ctrl"><label>② 浮遊電場 a*</label><input type="range" id="v2aa" min="0" max="0.08" step="0.001" value="0.03"><output id="v2aao">0.030</output></div>
+<div class="ctrl"><label>④ RF誤差 b*</label><input type="range" id="v2bb" min="0" max="0.08" step="0.001" value="0.03"><output id="v2bbo">0.030</output></div>
+<div style="font-size:11px;color:var(--fg3);margin:4px 0;">* ν₀=100基準値。s₀・a・b とも 1/ν₀ で自動スケール(天井はν₀不変)。</div>
+<div class="verdict" id="v2v"></div>
+<div class="chartbox"><canvas id="v2chart"></canvas></div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">フェーズ5(高コスト・必要時のみ)― 共同冷却で w₁ を削る(①)</h3>
+<p>②④+ν₀低減でも床(w₁)が高くN_optが非現実的なら、最終手段として<b>共同冷却+側帯/EIT冷却(µK)</b>で w₁ を削る。ただし任意分子・ビーム往復への一般化は未実証で最難関。</p>
+</div>
+
+<h2 id="s9">9. 決定的テスト(go/no-go)</h2>
+<p>最終確認は <b>off-resonance 対照 + 周波数掃引</b>。共鳴から数kHzずらしたRFを同強度で照射し、広がりが消えれば核スピン分極、残れば電場擾乱と切り分ける。さらに周波数掃引で、モデルが予測するコムが<b>共鳴周波数でだけ</b>現れるかを確認する。ここで初めて精度(分解度)が実証される。</p>
+<div class="callout info">PoCが止まった直接原因は技術ではなく<b>建物改修による実験中断</b>(要因⑩)。この決定的テストを完遂できる<b>安定した実験環境・運用体制</b>の確保が、技術課題と同列のボトルネックである。</div>
+
+<h2 id="s10">10. 競合状況と差別化</h2>
+<p>競合は<b>2軸</b>で見る必要がある ― (A)<b>同一原理</b>(気相イオンのNMR)を狙う直接競合と、(B)<b>同一目的</b>(質量分析に構造解析能を付与する)を別手段で達成する代替技術である。</p>
+
+<h3>(A) 直接競合 ― 事実上、世界に存在しない</h3>
+<p>磁気共鳴は中性分子ビームでは古くから実証されてきたが、<b>気相分子イオンへの適用を実証した例は本手法のほかにない</b>("<i>no application to gas phase molecular ions has yet been demonstrated</i>"、Fuke 2012 ほか)。すなわち磁気共鳴加速法による気相NMRは<b>世界で唯一の原理</b>であり、追随グループは確認できない。特許(US 7,855,557 / US 8,946,625)でも固められている。</p>
+<div class="callout warn"><b>表裏一体のリスク:</b> 「直接競合なし」は強力な差別化であると同時に、<b>原理実証まで独力で到達せねばならず、第三者による独立検証も存在しない</b>ことを意味する。新規性の主張と、原理実証の現実的ロードマップ(§8)の提示は<b>一体で語る</b>べきである。</div>
+
+<h3>(B) 競合技術 ― 同じ目的を別手段で(これが実質的な競合)</h3>
+<p>「構造の分からないMSに構造解析能を与える」という目的は、すでに複数の確立・商用化技術が狙っている。これらは振動・断面積・開裂といった<b>間接的な構造プロキシ</b>を返すのに対し、本手法は化学シフト=<b>直接の化学環境情報</b>を返す点で直交する。</p>
+<table>
+<tr><th>競合技術</th><th>得られる構造情報</th><th>成熟度</th><th>競合側の強み</th><th>気相NMR(本手法)が優れる点</th></tr>
+<tr><td><b>クライオIRイオン分光</b><br>(メッセンジャータグ)</td><td>赤外振動指紋(官能基・異性体識別)</td><td><b>高・要警戒</b><br><a href="https://pubs.acs.org/doi/10.1021/acs.analchem.5c08001">2025年に市販IM-MS(Synapt G2-S)へ後付け実装</a></td><td>既製機に載り即運用・相対的に低コスト・普及の足がかり</td><td>振動指紋ではなく<b>化学シフトと等価H個数を定量</b>(n を逆算)。情報軸が直交</td></tr>
+<tr><td><b>イオンモビリティ</b><br>(IM-MS)</td><td>衝突断面積(全体形状・立体配座)</td><td>非常に高(完全商用・標準)</td><td>高速・堅牢・広く普及した事実上の標準</td><td>CCSは分子全体の平均量。本手法は<b>局所的な化学環境</b>を分解</td></tr>
+<tr><td><b>電子系開裂</b><br>(ECD/ETD/EAD)+MS/MS</td><td>配列・結合位置(開裂パターン)</td><td>高(商用・配列決定の主流)</td><td>高感度・タンパク質一次構造決定で実績</td><td>非破壊で<b>開裂に依らず</b>官能基環境を直接同定</td></tr>
+<tr><td><b>IRMPD / FELイオン分光</b></td><td>振動スペクトル</td><td>中〜高(専用光源/施設)</td><td>確立した気相イオン構造解析</td><td>専用光源に依存せず<b>超伝導磁石で完結</b>しうる/化学シフトという別情報</td></tr>
+</table>
+
+<h3>(C) 競合ではない「技術供給源」</h3>
+<p>Penningトラップ精密測定(BASE 等)やイオントラップ量子計算のコミュニティは、競合ではなく<b>冷却(①)・非破壊スピン読み出し/単一イオン検出(③)・表面電場対策(②)の最先端を供給する味方</b>である。彼らの進展がそのまま本手法のボトルネックを解く(§7・§8の文献ヒントの出所)。</p>
+
+<div class="callout info"><b>差別化の核(提案書の主張):</b> 本手法の独自価値は2点に集約される ― (1)<b>気相イオンのNMRという世界唯一の原理</b>(直接競合ゼロ)、(2)NMRが返す<b>化学シフト=溶液NMR並みの直接的な化学環境情報</b>を、質量選別したイオン一種について非破壊で得ること。(B)群の代替技術はいずれも振動・断面積・開裂という<b>間接プロキシ</b>であり、本手法とは情報軸が<b>直交・相補</b>する。<br><b>ただし誠実な位置づけとして:</b> (B)群は<b>すでに動く・買える</b>成熟段階にある。したがって提案の説得力は「唯一性」だけでなく、<b>「(B)に対して直交かつより高分解能な情報を、現実的なロードマップ(§8)で原理実証できるか」</b>で決まる。査読で想定される「なぜ今さらNMR? IRで十分では?」には、<b>「IRは振動指紋、NMRは化学シフト ― 競合ではなく相補。両者の併用で構造同定の確度が上がる」</b>と正面から答える。</div>
+
+<h2 id="s11">11. PoCで精度が落ちた可能性のある箇所(仮説)</h2>
+<p>冨宅(2022)総説の実験記述から、原理実証(PoC)で<b>精度を落とした可能性のある箇所を予想</b>する。<b>いずれも論文の記述に基づく仮説</b>であり、断定ではない。前提として、減速器(TS-PSW/進行波TPW)・速度選別・速度分散補償(VDC)など<b>ビームを冷やし整える前半は完成度が高い</b>。崩れやすいのは「スピンをどう回し、どう読むか」=<b>④(RF反転)と③(統計)側</b>で、その中核が<b>πパルスの開ループ校正(イオン自身で未検証)</b>である。</p>
+
+<div class="callout warn"><b>πパルス校正の連鎖(本命):</b> 総説では、NMRコイルを市販FT-NMR分光計に挿入し<b>"水"の信号強度が最大になる電力をπパルス電力</b>と決め、その電力をそのまま気相イオンに適用している(θ=γ·B₁·ΔT、ΔT=L/v)。この校正は次の系統誤差を一度に持ち込む ― ①<b>試料形状違い</b>(体積試料の平均B₁ ≠ 軸上の細いビームが受けるB₁)、②<b>静止 vs 通過</b>(実効反転角は γ∫B₁(z)dz/v でフリンジ込み。矩形π近似が崩れる)、③<b>速度依存</b>(ΔT=L/v ゆえ1点速度でしか π にならない/5往復で累積)、④<b>設置後の同調ドリフト</b>(トリマー浮遊容量が振動・たわみで変動し校正環境≠測定環境)、⑤<b>2コイル非対称</b>(9.4T/3.1T両端の B₁ 誤差が往復毎に違う向きで蓄積)。<b>πの大きさをイオン自身で一度も検証していない</b>のが核心。</div>
+
+<table>
+<tr><th>#</th><th>精度が落ちた可能性のある箇所</th><th>論文中の根拠</th><th>性質</th><th>効く対策</th></tr>
+<tr><td><b>1</b></td><td><b>πパルスをイオンで未検証</b>(水校正の5系統誤差)</td><td>FT-NMRで水信号最大=π電力と決め流用。トリマーは測定直前調整が必要</td><td>④ b増大</td><td><b>イオン束での章動(nutation)曲線測定</b>で in-situ に π を確定</td></tr>
+<tr><td><b>2</b></td><td><b>共鳴周波数が別分子・別相の文献値+掃引未完</b></td><td>TEA⁺ を狙うのに TMA の溶液値(+1.27 kHz@9.4T)を初期値。単一周波数のみで掃引は中断により未実施</td><td>④ オフレゾ</td><td><b>断熱掃引(WURST/chirp)</b>で狙い未知を自動吸収</td></tr>
+<tr><td><b>3</b></td><td><b>「10%広がり」がRFの電気的キックの可能性</b></td><td>πパルスで数百 V<sub>p-p</sub> を印加=低速イオンの並進を乱す可能性を本人が明記。広がりの由来を切り分けず</td><td>判定不能</td><td><b>同電力・オフレゾナンス対照</b>(数kHzずらして広がりが残るか)</td></tr>
+<tr><td><b>4</b></td><td><b>電子スピン対照が null = 機構の独立実証なし</b></td><td>電子の磁気モーメントは約660倍で見やすいはずが、繰返しても実験誤差内で分極観測できず</td><td>妥当性</td><td><b>緩和の遅い既知イオンで"効くはず"の正の対照</b>を先に立てる</td></tr>
+<tr><td><b>5</b></td><td>速度同期の累積誤差</td><td>RF励起時刻を TOF から推定した速度で同期(図8)。速度誤差→コイル中心外で π を撃つ</td><td>④ b</td><td>非破壊速度診断で速度を確定してから同期</td></tr>
+<tr><td><b>6</b></td><td>単一ガウスFWHM解析がコム情報を捨てる</td><td>RF ON/OFF を単一ガウスでフィットしFWHM比較(図10)。本人も有意性判定不能と明記</td><td>③ 検出力</td><td>個々の到達時刻を生データにした<b>混合モデル+ベイズ因子</b>(§8 フェーズ1)</td></tr>
+</table>
+
+<h3>各項目が R にどれくらい効くか(推定)</h3>
+<p>上の6項目は <b>R への効き方が3種類</b>に分かれるため、同じ「寄与%」では測れない。換算則は <b>b ≈ (1−f)·s<sub>0</sub></b>(f=単発反転忠実度、s<sub>0</sub>=0.03 m/s)で、項目1・2・5 は f を<b>掛け算</b>で下げ(f≈f₁·f₂·f₅)、項目3 は反転失敗でなく並進を直接蹴る<b>加算項 c</b>。下表の「単独の R<sub>max</sub> 天井」は、その項目だけが残った場合(他は②④解決後の a=0.005 に固定)の R<sub>max</sub> = 2·s<sub>0</sub>/√(a²+b²+c²)。</p>
+<table>
+<tr><th>#</th><th>R への効き方(レバー)</th><th>現状の推定値</th><th>その項目"単独"の R<sub>max</sub> 天井</th><th>R影響度</th></tr>
+<tr><td><b>2</b></td><td>線幅 b(f₂=共鳴の当たり/オフレゾ)</td><td>f₂≈0.3、最悪→0</td><td><b>約2.7、最悪 0(信号消失)</b></td><td>★★★ 致命</td></tr>
+<tr><td><b>1</b></td><td>線幅 b(f₁=πの大きさ)</td><td>f₁≈0.7(悪くて0.3)</td><td><b>約5.8(悪くて2.7)</b></td><td>★★★ 大</td></tr>
+<tr><td><b>3</b></td><td>線幅 c(加算・電気的キック)</td><td>c≈0.005–0.01</td><td><b>約8.5〜5.4</b></td><td>★★ 中(偽陽性源)</td></tr>
+<tr><td><b>5</b></td><td>線幅 b(f₅=速度同期)</td><td>f₅≈0.95</td><td><b>約11.5</b></td><td>★ 小</td></tr>
+<tr><td><b>6</b></td><td>検出力(③)― R天井は不変</td><td>情報の大半を破棄</td><td>R天井不変。必要数 ∝ 1/R⁴</td><td>★★ 中(別軸)</td></tr>
+<tr><td><b>4</b></td><td>ゲート(機構が在るか)</td><td>P(信号が本物)が未確定</td><td>上の R すべてに ×0 or ×1</td><td>★★★ 前提</td></tr>
+</table>
+<div class="callout warn"><b>合成と寄与の結論:</b> 全項目が現状値だと f≈f₁·f₂·f₅≈0.33、b≈0.020、c≈0.008、a≈0.03 で <b>R<sub>max</sub> ≈ 0.06/√(0.03²+0.02²+0.008²) ≈ 1.6</b>(§6の現状値と整合)。<b>R を縛る主因は 2 と 1</b> で、断熱掃引(2)+イオン束での章動 in-situ 校正(1)で f→0.99+ にすれば、残る天井は②が決め <b>R<sub>max</sub>≈12(a=0.005)〜20(②中庸)</b>。<b>R を 1.6→12〜20 に上げる寄与のほぼ全部が 1+2</b>。3・5 は二次(1・2 を直せば a に埋もれる。ただし3はオフレゾ対照で偽陽性を潰す価値あり)、6 は R でなく"見える化"(現データのベイズ再解析でほぼ無料)、4 は前提(正の対照が取れるまで上の R はすべて条件付き)。<br><b>不確かさ:</b> 2・1・3 の現状値は論文記述からの粗い推定で誤差が大きく、特に 2 は f₂≈1(偶然合致)〜0(完全オフレゾ=信号ゼロ)の幅がある。確定には実機で f を測る(章動曲線+オフレゾ対照)以外にない。</div>
+
+<div class="callout info"><b>独立して効く3つの未検証 ― これが核心:</b> πパルスの<b>(A)大きさ</b>・<b>(B)周波数</b>・<b>(C)電気的副作用</b>は互いに独立に効くが、<b>3つとも検証されていない</b>。さらに電子スピンという唯一の"易しい"正の対照も null。したがって<b>現状の「10%広がり」は核スピン分極の証拠としては弱い</b>。逆に言えば、ここを ④(in-situ π校正+断熱掃引+オフレゾ対照)と ③(ベイズ再解析)で固めることが、新規ハードを増やさずに PoC を決着させる最短路であり、§8 ロードマップのフェーズ1〜3に直結する。</div>
+
+<h2 id="s12">12. 文献・特許・研究費</h2>
+<h3>本手法の主要文献</h3>
+<ul class="refs">
+<li>Kominato, Fuke ら, <i>IEEE Trans. Appl. Supercond.</i> <b>20</b>, 736 (2010) ― 傾斜磁場型超伝導磁石</li>
+<li><a href="https://doi.org/10.1063/1.4742768">Fuke, Tona, Fujihara, Sakurai, Ishikawa, <i>Rev. Sci. Instrum.</i> <b>83</b>, 085106 (2012)</a> ― 検出原理と装置(中核論文)</li>
+<li><a href="https://doi.org/10.1007/s10751-015-1189-x">Fuke, Ohshima, Tona, <i>Hyperfine Interact.</i> <b>236</b>, 9 (2015)</a> ― 強磁場中の冷イオン生成</li>
+<li><a href="https://doi.org/10.5702/massspec.S22-03">Fuke, <i>J. Mass Spectrom. Soc. Jpn.</i> <b>70</b>, 4 (2022)</a> ― 日本語総説(J-STAGE 無料)</li>
+<li><a href="https://www.sciencedirect.com/science/article/abs/pii/S1387380623000593">Fuke ら, <i>Int. J. Mass Spectrom.</i> (2023)</a> ― 極低温イオン生成 II</li>
+<li>特許: <a href="https://patents.google.com/patent/US7855557B2/en">US 7,855,557</a> / <a href="https://patents.google.com/patent/US8946625B2/en">US 8,946,625</a>(日・英・独でも取得)</li>
+<li>研究費: 科研費 <a href="https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-24350009/">24350009</a> / <a href="https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-15K13630/">15K13630</a> / <a href="https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-18K05190/">18K05190</a></li>
+</ul>
+<h3>各検討項目の最新ヒント(代表)</h3>
+<ul class="refs">
+<li>① <a href="https://doi.org/10.1103/PhysRevLett.132.083001">Xu, Toscano, Willitsch, <i>PRL</i> <b>132</b>, 083001 (2024)</a> ― 119 amu有機イオンの共同冷却</li>
+<li>② <a href="https://doi.org/10.1103/PhysRevB.106.035409">Berlin-Udi ら, <i>PRB</i> <b>106</b>, 035409 (2022)</a> ― ベーク逆効果の警告／Hite ら, <i>NJP</i> <b>23</b> (2021) ― 表面処理の定量比較</li>
+<li>③ <a href="https://doi.org/10.1038/s41592-024-02207-8">Kafader ら, <i>Nature Methods</i> (2024)</a> ― 単一イオン25秒非破壊観測／I2MS思想</li>
+<li>④ <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10398713/">Parnell ら, <i>RSI</i> <b>92</b>, 063906 (2021)</a> ― 中性子の飛行中・固定通過時間スピン反転 0.9999</li>
+</ul>
+<h3>ブレイクスルー深掘り(②④優先・第3回調査の代表)</h3>
+<ul class="refs">
+<li>② <a href="https://doi.org/10.1103/PhysRevLett.109.103001">Hite ら, <i>PRL</i> <b>109</b>, 103001 (2012)</a> ― Ar⁺ in-situ ミリングで加熱率 約121倍低減</li>
+<li>② <a href="https://doi.org/10.1103/PhysRevA.97.020302">Sedlacek/Chiaverini, <i>PRA</i> <b>97</b>, 020302 (2018)</a> ― 電場ノイズの d⁻⁴ 則・クライオで約2桁低減</li>
+<li>② <a href="https://doi.org/10.1038/s41598-022-11142-7">Ghadimi ら, <i>Sci. Rep.</i> <b>12</b>, 7193 (2022)</a> ― 浮遊場のML動的自動補償(手動比+96%)</li>
+<li>② <a href="https://arxiv.org/abs/2404.08340">Vitale ら, arXiv:2404.08340 (2024)</a> ― LISA Pathfinder 実機のパッチ電位(数 mV・相関長 mm級)</li>
+<li>② <a href="https://arxiv.org/abs/1606.01525">Hahn/Blaum ら, <i>RSI</i> <b>87</b>, 063115 (2016)</a> ― 35m静電蓄積リングCSRを5.5Kで運用(大型・低温・静電閉込めの実機アナログ)</li>
+<li>④ <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2929662/">Garwood/Tesiram, <i>JMR</i> <b>204</b>, 333 (2010)</a> ― HSn(sech)断熱パルスの実装式／断熱条件 1−f≈exp(−πQ/2)</li>
+<li>④ <a href="https://doi.org/10.1038/s41598-020-58823-9">Bhole &amp; Jones, <i>Sci. Rep.</i> <b>10</b>, 2090 (2020)</a> ― 連結複合パルス(実効長は単πの約8倍=固定ΔTでは時間予算不足)</li>
+<li>④ <a href="https://www.sciencedirect.com/science/article/abs/pii/S1090780703004221">Skinner/Glaser, <i>JMR</i> <b>167</b>, 68 (2003)</a> ― 限定RF振幅下のGRAPE最適制御</li>
+</ul>
+
+<div class="foot">
+<p>本資料は調査・分析の整理であり、定量値の一部(s₀・a・b の仮値、寄与度%等)は説明用の見積もり。引用時は原典での確認を推奨。分裂幅の式・現状値は冨宅(2022)総説に基づく。</p>
+<p>作成: 2026年 ／ 姉妹資料「気相NMR_理解のための解説.html」を併せて参照。</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+function theme(){
+  var d=matchMedia('(prefers-color-scheme: dark)').matches;
+  return {dark:d, fg:d?'#b4b2a9':'#5f5e5a', grid:d?'rgba(255,255,255,0.09)':'rgba(0,0,0,0.08)',
+    teal:'#1d9e75', tealFill:d?'rgba(29,158,117,0.13)':'rgba(29,158,117,0.10)',
+    coral:'#d85a30', gray:'#888780'};
+}
+/* ---------- 装置模式図 ---------- */
+(function(){
+  var t=theme();
+  var c1=t.dark?'#7f77dd':'#534ab7', c2=t.dark?'#5dcaa5':'#0f6e56';
+  var svg='<svg viewBox="0 0 860 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="気相NMR装置の模式図。左に高磁場9.4T、右に低磁場3.1T、間を傾斜磁場でつなぎ、内部のNMRセルでイオンが往復、両端にRFコイル、右端にMCP検出器。">'
+  +'<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="'+t.gray+'"/></marker></defs>'
+  +'<text x="430" y="26" text-anchor="middle" font-size="15" font-weight="600" fill="'+(t.dark?'#ececdf':'#1c1c1a')+'">超伝導磁石ボーア内の往復イオントラップ(NMRセル)</text>'
+  +'<rect x="60" y="70" width="740" height="120" rx="14" fill="none" stroke="'+t.grid+'" stroke-width="2"/>'
+  +'<rect x="70" y="80" width="150" height="100" rx="8" fill="'+(t.dark?'#26215c':'#eeedfe')+'" opacity="0.7"/>'
+  +'<text x="145" y="120" text-anchor="middle" font-size="14" font-weight="600" fill="'+c1+'">高磁場 9.4 T</text>'
+  +'<text x="145" y="140" text-anchor="middle" font-size="11" fill="'+c1+'">RFコイル 400 MHz</text>'
+  +'<text x="430" y="118" text-anchor="middle" font-size="12" fill="'+t.fg+'">傾斜磁場(最大 25 T/m)</text>'
+  +'<line x1="225" y1="150" x2="640" y2="150" stroke="'+t.gray+'" stroke-width="1.5" stroke-dasharray="5 4"/>'
+  +'<rect x="640" y="80" width="150" height="100" rx="8" fill="'+(t.dark?'#04342c':'#e1f5ee')+'" opacity="0.7"/>'
+  +'<text x="715" y="120" text-anchor="middle" font-size="14" font-weight="600" fill="'+c2+'">低磁場 3.1 T</text>'
+  +'<text x="715" y="140" text-anchor="middle" font-size="11" fill="'+c2+'">RFコイル 132 MHz</text>'
+  +'<circle cx="430" cy="150" r="7" fill="'+t.coral+'"/>'
+  +'<path d="M250,150 L610,150" stroke="'+t.coral+'" stroke-width="1.5" marker-end="url(#ah)" marker-start="url(#ah)" opacity="0.7"/>'
+  +'<text x="430" y="178" text-anchor="middle" font-size="11" fill="'+t.coral+'">イオン束が往復(両端でπパルス→核スピン反転)</text>'
+  +'<rect x="808" y="110" width="14" height="60" rx="3" fill="'+t.gray+'"/>'
+  +'<text x="815" y="195" text-anchor="middle" font-size="10" fill="'+t.fg+'">MCP</text>'
+  +'<text x="430" y="232" text-anchor="middle" font-size="12" fill="'+t.fg+'">核スピン状態の違い → 飛行時間(TOF)の分裂 として検出</text>'
+  +'</svg>';
+  document.getElementById('schematic').innerHTML=svg;
+})();
+
+/* ---------- 検討項目の寄与度(フェーズ別)横棒グラフ ---------- */
+(function(){
+  var t=theme();
+  var data=[
+    {l:'① 速度分布(冷却)',p:30,q:15,s:1},
+    {l:'② 浮遊電場の除去',p:20,q:15,s:1},
+    {l:'③ イオン数・統計',p:15,q:10,s:1},
+    {l:'④ RF忠実度・同期',p:10,q:5,s:1},
+    {l:'⑩ 実験環境の継続',p:7,q:5,s:0},
+    {l:'⑤ スピン緩和・真空',p:5,q:8,s:0},
+    {l:'⑨ シミュレーション',p:5,q:5,s:0},
+    {l:'⑥ 磁場安定性',p:3,q:10,s:0},
+    {l:'⑧ 測定方式(FT化)',p:3,q:12,s:0},
+    {l:'⑦ イオン源(ESI)',p:2,q:15,s:0}
+  ];
+  var cv=document.getElementById('factorChart'); if(!cv) return;
+  var ctx=cv.getContext('2d');
+  var tealP=t.dark?'#5dcaa5':'#1d9e75';
+  function draw(){
+    var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W=r.width,H=r.height,mL=132,mR=46,mT=14,mB=30;
+    var pw=W-mL-mR, ph=H-mT-mB, xMax=32, n=data.length, rh=ph/n;
+    ctx.clearRect(0,0,W,H);
+    var X=function(v){return mL+v/xMax*pw;};
+    ctx.strokeStyle=t.grid;ctx.lineWidth=1;ctx.fillStyle=t.fg;ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    for(var g=0;g<=30;g+=10){var x=X(g);ctx.beginPath();ctx.moveTo(x,mT);ctx.lineTo(x,mT+ph);ctx.stroke();ctx.fillText(g+'%',x,mT+ph+18);}
+    for(var i=0;i<n;i++){
+      var d=data[i], rt=mT+i*rh;
+      if(d.s){ctx.fillStyle=t.dark?'rgba(29,158,117,0.12)':'rgba(29,158,117,0.08)';ctx.fillRect(0,rt,W,rh);}
+      ctx.fillStyle=d.s?(t.dark?'#9fe1cb':'#0f6e56'):t.fg;ctx.font=(d.s?'600 ':'')+'11px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText(d.l,mL-8,rt+rh/2);
+      var bh=rh*0.26;
+      var y1=rt+rh*0.20;
+      ctx.fillStyle=d.s?tealP:t.gray;ctx.fillRect(mL,y1,X(d.p)-mL,bh);
+      ctx.fillStyle=t.fg;ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText(d.p+'%',X(d.p)+4,y1+bh/2);
+      var y2=rt+rh*0.54;
+      ctx.strokeStyle=t.coral;ctx.lineWidth=1.5;ctx.strokeRect(mL,y2,X(d.q)-mL,bh);
+      ctx.fillStyle=t.fg;ctx.fillText(d.q+'%',X(d.q)+4,y2+bh/2);
+    }
+    ctx.textBaseline='alphabetic';
+    ctx.fillStyle=t.fg;ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('寄与度のめやす(%)',mL+pw/2,H-2);
+  }
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ---------- 分解度バジェット R(N) チャート ---------- */
+(function(){
+  var s0=0.030, t=theme();
+  var cv=document.getElementById('rChart'); if(!cv) return;
+  var ctx=cv.getContext('2d');
+  var w1=document.getElementById('w1'), aa=document.getElementById('aa'), bb=document.getElementById('bb');
+  var w1o=document.getElementById('w1o'), aao=document.getElementById('aao'), bbo=document.getElementById('bbo');
+  var verdict=document.getElementById('verdict');
+  function R(n,W,A,B){return s0*(2*n+1)/Math.sqrt(W*W+(A*n)*(A*n)+(B*n)*(B*n));}
+  function draw(){
+    var W=+w1.value, A=+aa.value, B=+bb.value;
+    w1o.textContent=W.toFixed(2)+' m/s'; aao.textContent=A.toFixed(3); bbo.textContent=B.toFixed(3);
+    var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    var Wd=r.width, Hd=r.height, mL=44, mR=16, mT=14, mB=36;
+    var pw=Wd-mL-mR, ph=Hd-mT-mB;
+    var Nmax=30, Rmax=5;
+    ctx.clearRect(0,0,Wd,Hd);
+    var X=function(n){return mL+(n-1)/(Nmax-1)*pw;};
+    var Y=function(v){return mT+ph-Math.min(v,Rmax)/Rmax*ph;};
+    ctx.strokeStyle=t.grid; ctx.lineWidth=1; ctx.fillStyle=t.fg; ctx.font='11px sans-serif';
+    for(var v=0;v<=Rmax;v++){var y=Y(v);ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(Wd-mR,y);ctx.stroke();
+      ctx.textAlign='right';ctx.fillText(v,mL-6,y+3);}
+    ctx.textAlign='center';
+    for(var n=5;n<=30;n+=5){ctx.fillText(n,X(n),Hd-mB+18);}
+    ctx.fillText('往復回数 N',mL+pw/2,Hd-4);
+    ctx.save();ctx.translate(12,mT+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('分解度 R = 間隔 / 線幅',0,0);ctx.restore();
+    ctx.strokeStyle=t.coral;ctx.lineWidth=1.5;ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.moveTo(mL,Y(2));ctx.lineTo(Wd-mR,Y(2));ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle=t.coral;ctx.textAlign='left';ctx.fillText('分解閾値 R=2',mL+4,Y(2)-5);
+    var ceil=2*s0/Math.sqrt(A*A+B*B+1e-9);
+    ctx.strokeStyle=t.gray;ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(mL,Y(ceil));ctx.lineTo(Wd-mR,Y(ceil));ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=t.teal;ctx.lineWidth=2.5;ctx.beginPath();
+    for(var nn=1;nn<=Nmax;nn++){var x=X(nn),y=Y(R(nn,W,A,B));if(nn===1)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+    ctx.stroke();
+    var nHit=null;for(var k=1;k<=300;k++){if(R(k,W,A,B)>=2){nHit=k;break;}}
+    if(nHit){verdict.style.background=t.dark?'rgba(29,158,117,0.18)':'#e1f5ee';verdict.style.color=t.dark?'#9fe1cb':'#0f6e56';
+      verdict.textContent='✓ 分解可能: N = '+nHit+' 往復で R=2 に到達(天井 R_max ≈ '+ceil.toFixed(1)+')';}
+    else{verdict.style.background=t.dark?'rgba(216,90,48,0.18)':'#faece7';verdict.style.color=t.dark?'#f0997b':'#993c1d';
+      verdict.textContent='✗ N をいくら増やしても分解不可: 天井 R_max ≈ '+ceil.toFixed(2)+' < 2 → まず a,b(②④)を下げる必要';}
+  }
+  [w1,aa,bb].forEach(function(el){['input','change'].forEach(function(ev){el.addEventListener(ev,draw);});});
+  window.addEventListener('resize',draw);
+  draw();
+})();
+
+/* ---------- ν₀低減 R(N) ツール ---------- */
+(function(){
+  var t=theme();
+  var cv=document.getElementById('v2chart'); if(!cv) return;
+  var ctx=cv.getContext('2d');
+  var v0=document.getElementById('v2v0'),w1=document.getElementById('v2w1'),aa=document.getElementById('v2aa'),bb=document.getElementById('v2bb');
+  var v0o=document.getElementById('v2v0o'),w1o=document.getElementById('v2w1o'),aao=document.getElementById('v2aao'),bbo=document.getElementById('v2bbo');
+  var vd=document.getElementById('v2v');
+  function R(N,v,W,a,b){var sc=100/v,s0=0.03*sc,A=a*sc,B=b*sc;return s0*(2*N+1)/Math.sqrt(W*W+(A*N)*(A*N)+(B*N)*(B*N));}
+  function nHit(v,W,a,b){for(var k=1;k<=400;k++){if(R(k,v,W,a,b)>=2)return k;}return null;}
+  function draw(){
+    var v=+v0.value,W=+w1.value,a=+aa.value,b=+bb.value;
+    v0o.textContent=v+' m/s';w1o.textContent=W.toFixed(2)+' m/s';aao.textContent=a.toFixed(3);bbo.textContent=b.toFixed(3);
+    var r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    var Wd=r.width,Hd=r.height,mL=44,mR=14,mT=12,mB=34,pw=Wd-mL-mR,ph=Hd-mT-mB,Nmax=30,Rmax=6;
+    ctx.clearRect(0,0,Wd,Hd);
+    var X=function(N){return mL+(N-1)/(Nmax-1)*pw;},Y=function(val){return mT+ph-Math.min(val,Rmax)/Rmax*ph;};
+    ctx.strokeStyle=t.grid;ctx.lineWidth=1;ctx.fillStyle=t.fg;ctx.font='11px sans-serif';
+    for(var g=0;g<=Rmax;g++){var y=Y(g);ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(Wd-mR,y);ctx.stroke();ctx.textAlign='right';ctx.fillText(g,mL-6,y+3);}
+    ctx.textAlign='center';for(var N=5;N<=30;N+=5){ctx.fillText(N,X(N),Hd-mB+18);}
+    ctx.fillText('往復回数 N',mL+pw/2,Hd-3);ctx.save();ctx.translate(11,mT+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('分解度 R',0,0);ctx.restore();
+    ctx.strokeStyle=t.coral;ctx.lineWidth=1.5;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(mL,Y(2));ctx.lineTo(Wd-mR,Y(2));ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=t.gray;ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
+    for(var n2=1;n2<=Nmax;n2++){var x=X(n2),yb=Y(R(n2,100,W,a,b));if(n2===1)ctx.moveTo(x,yb);else ctx.lineTo(x,yb);}ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=t.teal;ctx.lineWidth=2.6;ctx.beginPath();
+    for(var n=1;n<=Nmax;n++){var x2=X(n),yc=Y(R(n,v,W,a,b));if(n===1)ctx.moveTo(x2,yc);else ctx.lineTo(x2,yc);}ctx.stroke();
+    var ceil=2*0.03/Math.sqrt(a*a+b*b+1e-12),nh=nHit(v,W,a,b),nh100=nHit(100,W,a,b);
+    if(nh){vd.style.background=t.dark?'rgba(29,158,117,0.18)':'#e1f5ee';vd.style.color=t.dark?'#9fe1cb':'#0f6e56';
+      vd.textContent='✓ R=2到達: N='+nh+'(天井 R_max≈'+ceil.toFixed(1)+'、ν₀=100なら N='+(nh100||'∞')+')';}
+    else{vd.style.background=t.dark?'rgba(216,90,48,0.18)':'#faece7';vd.style.color=t.dark?'#f0997b':'#993c1d';
+      vd.textContent='✗ 分解不可: 天井 R_max≈'+ceil.toFixed(2)+' < 2 → ν₀を下げても無駄。まず②④を下げる';}
+  }
+  function preset(a,b){aa.value=a;bb.value=b;draw();}
+  document.getElementById('v2Now').addEventListener('click',function(){preset(0.03,0.03);});
+  document.getElementById('v2Fix').addEventListener('click',function(){preset(0.005,0.0003);});
+  [v0,w1,aa,bb].forEach(function(el){['input','change'].forEach(function(ev){el.addEventListener(ev,draw);});});
+  window.addEventListener('resize',draw);draw();
+})();
+})();
+</script>
+<script>
+/* 外部リンクは別タブで開く */
+document.querySelectorAll('a[href^="http"]').forEach(function(a){a.target="_blank";a.rel="noopener noreferrer";});
+</script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>気相NMRを理解するための解説 ― Q&Aと落とし穴</title>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f7f6f2; --bg3:#efede6; --fg:#1c1c1a; --fg2:#5f5e5a; --fg3:#8a8980;
+  --border:rgba(0,0,0,0.12); --border2:rgba(0,0,0,0.22);
+  --teal:#0f6e56; --teal2:#1d9e75; --coral:#993c1d; --coral2:#d85a30; --purple:#534ab7;
+  --info-bg:#e6f1fb; --info-fg:#0c447c; --warn-bg:#faeeda; --warn-fg:#854f0b;
+  --ok-bg:#e1f5ee; --ok-fg:#0f6e56; --bad-bg:#faece7; --bad-fg:#993c1d; --q-bg:#eeedfe; --q-fg:#3c3489;
+}
+@media (prefers-color-scheme: dark){
+:root{
+  --bg:#1a1a18; --bg2:#232320; --bg3:#2c2c29; --fg:#ececdf; --fg2:#b4b2a9; --fg3:#888780;
+  --border:rgba(255,255,255,0.13); --border2:rgba(255,255,255,0.25);
+  --teal:#5dcaa5; --teal2:#5dcaa5; --coral:#f0997b; --coral2:#d85a30; --purple:#afa9ec;
+  --info-bg:#0c2740; --info-fg:#b5d4f4; --warn-bg:#3a2a0c; --warn-fg:#fac775;
+  --ok-bg:#0c3328; --ok-fg:#9fe1cb; --bad-bg:#3a1810; --bad-fg:#f0997b; --q-bg:#26215c; --q-fg:#cecbf6;
+}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:880px;margin:0 auto;padding:48px 24px 80px;}
+h1{font-size:26px;font-weight:600;line-height:1.4;margin:0 0 6px;}
+h2{font-size:20px;font-weight:600;margin:46px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+h3{font-size:16px;font-weight:600;margin:26px 0 8px;color:var(--teal);}
+.sub{color:var(--fg2);font-size:14px;margin:0 0 4px;}
+.lead{color:var(--fg2);font-size:15px;}
+p{margin:10px 0;}
+code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:0.92em;background:var(--bg3);padding:1px 5px;border-radius:4px;}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;}
+th{background:var(--bg2);font-weight:600;}
+.formula{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:14px 0;text-align:center;font-size:17px;}
+.formula .small{font-size:13px;color:var(--fg2);}
+.callout{border-radius:10px;padding:12px 16px;margin:14px 0;font-size:14.5px;}
+.callout.info{background:var(--info-bg);color:var(--info-fg);}
+.callout.warn{background:var(--warn-bg);color:var(--warn-fg);}
+.callout.ok{background:var(--ok-bg);color:var(--ok-fg);}
+.callout b{font-weight:600;}
+.qa{border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden;}
+.qa .q{background:var(--q-bg);color:var(--q-fg);padding:12px 18px;font-weight:600;font-size:15px;}
+.qa .q::before{content:"Q. ";opacity:0.7;}
+.qa .a{padding:12px 18px;font-size:14.5px;}
+.qa .a::before{content:"A. ";font-weight:600;color:var(--teal);}
+.pit{border-left:4px solid var(--coral2);background:var(--bg2);border-radius:0 8px 8px 0;padding:10px 16px;margin:14px 0;font-size:14.5px;}
+.pit b{color:var(--coral2);}
+.toolbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin:20px 0;}
+.toolbox h3{margin-top:0;color:var(--fg);}
+.ctrl{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px;}
+.ctrl label{color:var(--fg2);min-width:140px;}
+.ctrl output{font-weight:600;min-width:24px;text-align:right;}
+input[type=range]{flex:1;accent-color:var(--teal2);height:4px;}
+.chartbox{position:relative;width:100%;height:300px;}
+.chartbox.sm{height:230px;}
+canvas{display:block;width:100%;height:100%;}
+.svgbox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin:18px 0;}
+.svgbox svg{width:100%;height:auto;}
+.info-line{font-size:13px;color:var(--fg);text-align:center;margin-top:6px;}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--fg2);margin-bottom:6px;}
+.legend span{display:flex;align-items:center;gap:5px;}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.nav{font-size:13px;color:var(--fg2);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:20px 0;}
+.nav a{color:var(--teal);text-decoration:none;}.nav a:hover{text-decoration:underline;}
+.nav ol{margin:6px 0;padding-left:22px;}.nav li{margin:2px 0;}
+.glos dt{font-weight:600;margin-top:10px;}
+.glos dd{margin:2px 0 0;color:var(--fg2);font-size:14px;}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);color:var(--fg3);font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="sub">理解のための解説資料 ― 気相NMR分光法(磁気共鳴加速法)</p>
+<h1>気相NMRを理解するための解説<br><span style="font-size:18px;font-weight:500;color:var(--fg2);">Q&Aと、起きやすい誤解の地図</span></h1>
+<p class="lead">この資料は、後でもう一度読んだときに要点がスッと戻ってくることを目的に、原理を一歩ずつ・対話で出た良問・つまずきやすい落とし穴の順に並べた。図とシミュレーションは触って確かめられる。</p>
+
+<div class="nav">
+<b>目次</b>
+<ol>
+<li><a href="#s1">一言サマリー</a></li>
+<li><a href="#s2">原理を一歩ずつ</a></li>
+<li><a href="#s3">【体験】運動エネルギーの分裂</a></li>
+<li><a href="#s4">等価プロトン数 n とは</a></li>
+<li><a href="#s5">コムと包絡線</a></li>
+<li><a href="#s6">Q&A集(対話の歩み)</a></li>
+<li><a href="#s7">起きやすい誤解(落とし穴)</a></li>
+<li><a href="#s8">用語集</a></li>
+</ol>
+</div>
+
+<h2 id="s1">1. 一言サマリー</h2>
+<div class="callout ok"><b>これは何か:</b> 質量分析(質量しか分からない)に、NMR(原子の化学環境を読む)を接ぎ木し、<b>質量選別した気相イオン一種の「構造の指紋」</b>を読む装置。<br><b>なぜ価値があるか:</b> 「どの周波数(化学環境)に、何個の等価Hがあるか」というマップは構造そのもの。これを質量選別したイオンについて得られるのは、質量分析にも溶液NMRにも単独ではできない。</div>
+
+<h2 id="s2">2. 原理を一歩ずつ</h2>
+<p>キモは3段階。<b>① RFはスピンを反転させるだけ</b> → <b>② 実際に加速するのは傾斜磁場(Stern-Gerlach力)</b> → <b>③ 往復のたびに反転させ、力の向きを揃えて速度を蓄積</b>。</p>
+
+<div class="svgbox" id="ratchet"></div>
+
+<p>ブランコを正しい位相で押し続けると振幅が育つのと同じ。RFは「押す力」そのものではなく「<b>タイミングを合わせるスイッチ</b>」。エネルギー収支を量子で見ると、高磁場コイルで光子 hν<sub>H</sub> を吸収、低磁場コイルで hν<sub>L</sub> を放出し、差し引き <b>hν<sub>H</sub> − hν<sub>L</sub> ≈ 1.1 µeV/往復</b>が運動エネルギーとして残る。</p>
+
+<div class="callout info">この 1往復あたり約 1 µeV というキックの小ささが、<b>極低温(サブmK)冷却が必須</b >な理由。熱的な速度ばらつきが 1 µeV より大きいと、この信号は埋もれてしまう。</div>
+
+<h2 id="s3">3. 【体験】RFをかけると運動エネルギー分布はどうなるか</h2>
+<p>初期エネルギーが完全に一様(ノイズ0)の理想状態を仮定。RFをかけると、単一ピークが <b>n+1 本の二項分布の多重線(コム)</b>に分裂する。n(等価プロトン数)と N(往復回数)を動かして確かめよう。</p>
+<div class="toolbox">
+<h3>運動エネルギー分裂シミュレータ</h3>
+<div class="legend"><span><span class="sw" style="background:#8a8980;border:1px dashed #8a8980;"></span>RF OFF(全イオンが1本)</span><span><span class="sw" style="background:#1d9e75;"></span>RF ON(理想)</span></div>
+<div class="ctrl"><label>等価プロトン数 n</label><input type="range" id="np" min="1" max="6" step="1" value="4"><output id="npo">4</output></div>
+<div class="ctrl"><label>往復回数 N</label><input type="range" id="nr" min="1" max="6" step="1" value="5"><output id="nro">5</output></div>
+<div class="chartbox" id="combbox"><canvas id="combCanvas"></canvas></div>
+<div class="info-line" id="combInfo"></div>
+</div>
+<ul style="font-size:14px;color:var(--fg2);">
+<li><b>n を動かす</b> → ピーク本数が n+1 本に。偶数 n は中央に無変化のピークが残り、奇数 n は中央を挟んで対称。</li>
+<li><b>N を動かす</b> → 本数は不変、間隔だけが (2N+1) に比例して広がる。</li>
+<li>強度比はパスカルの三角形(二項係数)。総面積(全イオン数)は RF OFF の1本と同じ。</li>
+</ul>
+
+<h2 id="s4">4. 等価プロトン数 n とは(価数ではない)</h2>
+<p>NMRで「プロトン」= ¹H(水素)の原子核。<b>n は「同じ磁気的環境(同じ共鳴周波数)を共有するH原子の個数」</b>で、イオンの電荷(価数)とは無関係。</p>
+<table>
+<tr><th></th><th>価数(電荷状態)</th><th>等価プロトン数 n</th></tr>
+<tr><td>意味</td><td>イオン全体の正味電荷</td><td>同じ環境のH原子の個数</td></tr>
+<tr><td>決めるもの</td><td>質量分析の m/z</td><td>NMRの分裂本数(n+1)</td></tr>
+<tr><td>TMA⁺ N(CH₃)₄⁺</td><td><b>+1</b></td><td><b>12</b></td></tr>
+</table>
+<div class="callout info">「環境」と「スピン状態」は別の軸。n 個の等価プロトンは<b>同じ環境</b>だが、各自のスピン(α/β)は<b>バラバラでよい</b>。このバラつきの合計(M<sub>total</sub>)が n+1 本のコムを生む。</div>
+
+<h2 id="s5">5. コムと包絡線</h2>
+<p><b>包絡線(ほうらくせん, envelope)</b> = 離散ピーク(歯)の頂点をなぞる滑らかな輪郭線。櫛の歯と、歯先を結ぶシルエットの関係。</p>
+<div class="svgbox" id="envelope"></div>
+<table>
+<tr><th>測れるもの</th><th>n は読めるか</th><th>理由</th></tr>
+<tr><td>分解した線(歯が見える)</td><td>✅ 読める(偏極に無関係)</td><td>線は既知間隔の整数位置。偏極は高さを変えるだけで位置は不変</td></tr>
+<tr><td>未分解の包絡線の幅だけ</td><td>❌ 曖昧</td><td>幅 = f(n, 偏極)。両者が縺れて分離できない</td></tr>
+</table>
+<div class="callout warn">TEA⁺で観測された「約10%の広がった単峰」は、<b>歯が分解できず包絡線だけが見えた状態</b>。理想の鋭いコムに対し、現実はボケた輪郭が見えただけ。これを分解することが、残る開発課題そのもの。</div>
+
+<h2 id="s6">6. Q&A集(対話の歩み)</h2>
+
+<div class="qa"><div class="q">RFは100%運動エネルギーに変換される?量子論では?</div>
+<div class="a">いいえ。RFはまずスピン(ゼーマン)エネルギーになり、運動への変換は傾斜磁場が仲介する。正味でも、高磁場で吸収した hν<sub>H</sub> のうち KE に残るのは (B<sub>H</sub>−B<sub>L</sub>)/B<sub>H</sub> ≈ 67%、残りは低磁場コイルで再放出。実際は不完全πパルス等でさらに低い。なお「決定論的に100%反転する」(πパルスの忠実度)は別概念で、こちらが設計目標。</div></div>
+
+<div class="qa"><div class="q">理想的なπパルスは、ランダムなスピンを同じ向きに揃える?</div>
+<div class="a">いいえ。揃える(整列・偏極)のではなく、全スピンを<b>ネガポジ反転</b>(α↔β)するだけ。偏りの大きさ(|M<sub>total</sub>|)は保たれ符号だけ反転する。可逆(ユニタリ)操作なので乱雑さは減らせない。「6α6β」のような半々(M=0)は反転しても半々のまま。</div></div>
+
+<div class="qa"><div class="q">スピンのランダム性はRFの当たり方で決まる(モンテカルロ的)?</div>
+<div class="a">いいえ。理想πパルスは全プロトンを確実に反転させ、取りこぼしはない。乱数は<b>反転の「前」、初期スピン状態</b>にある(核スピンは生成時にほぼ50:50の無偏極=熱的な乱雑さ)。この初期の偏り M<sub>total</sub> が二項分布になり、n+1 本のコムを作る。</div></div>
+
+<div class="qa"><div class="q">スピンが全部揃っていたら、原理は成立しない?それとも好都合?</div>
+<div class="a">好都合。全イオンが同じ最大シフトを受け、1本の鋭いシフトピークになり感度が最大化(要因③を改善)。使えない理由は原理ではなく実装 ― 核スピンを揃えるのが極めて難しい(並進をサブmKに冷やしてもスピンは揃わない)。将来、気相イオンの超核偏極ができれば感度の切り札になる。</div></div>
+
+<div class="qa"><div class="q">中途半端な偏極だと、分裂幅がわかっても n はわからない?</div>
+<div class="a">「包絡線の幅しか測れない」なら、その通り(幅=f(n,偏極)で縺れる)。だが「線を分解できる」なら、間隔(偏極に無依存の既知量)と線位置/本数から n は確定する。<b>分解能が、偏極という余計な未知数を消す鍵</b> ― だから冷却(要因①)がここでも効く。</div></div>
+
+<div class="qa"><div class="q">分裂幅は理論で正確に予測できる?</div>
+<div class="a">できる。Δν = n × (μ<sub>p</sub>/Mν<sub>0</sub>)(B<sub>H</sub>−B<sub>L</sub>)(2N+1)。n 以外は全部既知(定数・質量はMSが与える・校正・計数)。だから順方向に予測でき、逆に分裂幅を測れば n が出る。質量 M が式に入るので、MSとのタンデムだからこそ定量計算が閉じる。</div></div>
+
+<div class="qa"><div class="q">分子サイズが無限なら n も無限?</div>
+<div class="a">対称性(周期性)次第。無限でも周期的(ポリマー・結晶)なら n→∞(滑らかなガウス包絡線=連続に見える唯一の場面)。非周期的な巨大分子(タンパク質等)では n は小さいまま、代わりに<b>周波数の種類が無限に増える</b>(スペクトル混雑)。本装置が測る有限・非周期の気相イオンは常に後者側。</div></div>
+
+<h2 id="s7">7. 起きやすい誤解(落とし穴)</h2>
+<div class="pit"><b>誤解1:</b> 「全状態が等確率」なら分布は平ら。→ <b>正:</b> 微状態が等確率でも分布は平らにならず<b>二項分布(中央が高い)</b>。M<sub>total</sub>=0 になる配置が一番多い(多重度)から。例: n=4 で M=0 は6通り、M=±2 は各1通り。</div>
+<div class="pit"><b>誤解2:</b> n は価数のようなもの。→ <b>正:</b> 価数(電荷)とは無関係。n は同じ環境のH原子の個数。TMA⁺は価数+1だが n=12。</div>
+<div class="pit"><b>誤解3:</b> ランダム性はRFが確率的に当たるから。→ <b>正:</b> 理想πは決定論的に全反転。乱数は反転前の初期スピン状態にある。</div>
+<div class="pit"><b>誤解4:</b> n が大きいと連続スペクトルになり分析困難。→ <b>正:</b> 1分子の n は有限・有限本数。間隔を決めるのは n でなく質量 M(∝1/M)。困るのは未分解時の幅の縮退と、大分子での多周波数の混雑。</div>
+<div class="pit"><b>誤解5:</b> πパルスは「揃える」操作。→ <b>正:</b> 「ネガポジ反転」操作。偏りは保たれ符号だけ反転。</div>
+
+<h2 id="s8">8. 用語集</h2>
+<dl class="glos">
+<dt>ゼーマンエネルギー</dt><dd>磁場中でスピンの向きにより生じるエネルギー差。9.4 Tの陽子で ΔE = hν = 1.66 µeV(= 400 MHz光子1個ぶん)。</dd>
+<dt>Stern-Gerlach力</dt><dd>磁気モーメントが磁場勾配 dB/dz 中で受ける力 F = μ(dB/dz)。向きはスピンで逆になる。本手法で実際に加速する力。</dd>
+<dt>πパルス(パイパルス)</dt><dd>スピンを正確に180°回す(反転する)コヒーレントなRFパルス。理想なら確率1で α↔β を入れ替える。</dd>
+<dt>ラビ振動/忠実度</dt><dd>RF場でスピン状態が回転する現象。πパルスの「正確に反転できた度合い」が忠実度。N回の累積で効く。</dd>
+<dt>核スピン分極(本手法の意味)</dt><dd>スピン状態の違いが飛行時間(TOF)の分裂として現れること。Δν として測る。</dd>
+<dt>多重線(コム)</dt><dd>等価スピンが作る等間隔のピーク群。本数 n+1、強度はパスカルの三角形(二項)。「コム」は形の比喩で正式には多重線。</dd>
+<dt>包絡線(envelope)</dt><dd>離散ピークの頂点をなぞる輪郭線。分解できないとこれだけが残り、n を曖昧にする。</dd>
+<dt>M<sub>total</sub></dt><dd>等価プロトンの合計スピン射影 =(α数−β数)/2。各分子の加速量を決め、ピーク位置を決める。</dd>
+<dt>分解度 R</dt><dd>R = 間隔 ÷ 線幅。R&gt;2 でコムが分解できる。精度の本体。</dd>
+<dt>VDC(速度分散補償器)</dt><dd>速い成分を減速・遅い成分を加速し速度分布を圧縮する装置。0.4 m/s(サブmK相当)を達成。</dd>
+<dt>patch potential(浮遊電場)</dt><dd>電極表面の汚れ・仕事関数のムラが作る微小電位。µeV級イオンの軌道を乱す(要因②)。</dd>
+</dl>
+
+<div class="foot">
+<p>本資料は対話に基づく理解の整理。定量値の一部は説明用の見積もり。原理・現状値は冨宅(2022)総説に基づく。詳しい現状・ロードマップは姉妹資料「気相NMR_状況とロードマップ.html」を参照。</p>
+<p>作成: 2026年</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+function theme(){
+  var d=matchMedia('(prefers-color-scheme: dark)').matches;
+  return {dark:d, fg:d?'#b4b2a9':'#5f5e5a', fgStrong:d?'#ececdf':'#1c1c1a',
+    grid:d?'rgba(255,255,255,0.10)':'rgba(0,0,0,0.10)',
+    teal:'#1d9e75', coral:'#d85a30', gray:'#888780',
+    purple:d?'#afa9ec':'#534ab7', teal2:d?'#5dcaa5':'#0f6e56'};
+}
+/* ---------- ラチェット(エネルギー収支)図 ---------- */
+(function(){
+  var t=theme(), c1=t.purple, c2=t.teal2;
+  var svg='<svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="エネルギー収支のラチェット図。高磁場コイルで光子を吸収しスピン反転、低磁場コイルで放出、差し引きが運動エネルギーとして蓄積する。">'
+  +'<text x="430" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="'+t.fgStrong+'">1往復のエネルギー収支(RFはスイッチ、傾斜磁場が加速)</text>'
+  /* track */
+  +'<line x1="120" y1="150" x2="740" y2="150" stroke="'+t.grid+'" stroke-width="2"/>'
+  /* high coil */
+  +'<rect x="120" y="70" width="130" height="90" rx="8" fill="'+(t.dark?'#26215c':'#eeedfe')+'" opacity="0.7"/>'
+  +'<text x="185" y="100" text-anchor="middle" font-size="13" font-weight="600" fill="'+c1+'">高磁場コイル</text>'
+  +'<text x="185" y="120" text-anchor="middle" font-size="12" fill="'+c1+'">光子 hν_H を吸収</text>'
+  +'<text x="185" y="137" text-anchor="middle" font-size="11" fill="'+c1+'">α→β 反転</text>'
+  /* low coil */
+  +'<rect x="610" y="70" width="130" height="90" rx="8" fill="'+(t.dark?'#04342c':'#e1f5ee')+'" opacity="0.7"/>'
+  +'<text x="675" y="100" text-anchor="middle" font-size="13" font-weight="600" fill="'+c2+'">低磁場コイル</text>'
+  +'<text x="675" y="120" text-anchor="middle" font-size="12" fill="'+c2+'">光子 hν_L を放出</text>'
+  +'<text x="675" y="137" text-anchor="middle" font-size="11" fill="'+c2+'">β→α 反転</text>'
+  /* ion + arrows */
+  +'<circle cx="430" cy="150" r="7" fill="'+t.coral+'"/>'
+  +'<path d="M260,150 L600,150" stroke="'+t.coral+'" stroke-width="1.5" stroke-dasharray="4 4"/>'
+  +'<text x="430" y="142" text-anchor="middle" font-size="12" fill="'+t.coral+'">傾斜磁場でイオンが加速 ←→ 往復</text>'
+  /* net */
+  +'<rect x="300" y="185" width="260" height="34" rx="8" fill="'+(t.dark?'#2c2c29':'#f7f6f2')+'" stroke="'+t.grid+'"/>'
+  +'<text x="430" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="'+t.fgStrong+'">差し引き hν_H − hν_L ≈ 1.1 µeV → 運動エネルギーとして蓄積</text>'
+  +'</svg>';
+  document.getElementById('ratchet').innerHTML=svg;
+})();
+
+/* ---------- 包絡線 SVG ---------- */
+(function(){
+  var t=theme();
+  var stems=[[80,0.05],[167,0.30],[253,0.75],[340,1.0],[427,0.75],[513,0.30],[600,0.05]];
+  var baseY=240, topMax=180, val2y=function(v){return baseY-v*topMax;};
+  var s='<svg viewBox="0 0 680 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="二項分布の離散ピーク(歯)と、その頂点をなぞる包絡線。">'
+  +'<text x="340" y="24" text-anchor="middle" font-size="14" font-weight="600" fill="'+t.fgStrong+'">包絡線 = 全ピークの頂点をなぞる「全体の輪郭」</text>'
+  +'<line x1="60" y1="'+baseY+'" x2="620" y2="'+baseY+'" stroke="'+t.gray+'" stroke-width="1"/>';
+  /* envelope path */
+  var p='M80,'+val2y(0.05).toFixed(0);
+  var pts=stems.map(function(s){return [s[0],val2y(s[1])];});
+  for(var i=0;i<pts.length-1;i++){var x0=pts[i][0],y0=pts[i][1],x1=pts[i+1][0],y1=pts[i+1][1];var xm=(x0+x1)/2;p+=' C'+xm+','+y0.toFixed(0)+' '+xm+','+y1.toFixed(0)+' '+x1+','+y1.toFixed(0);}
+  s+='<path d="'+p+'" fill="none" stroke="'+t.coral+'" stroke-width="2.5" stroke-dasharray="6 5"/>';
+  /* stems */
+  stems.forEach(function(st){var x=st[0],y=val2y(st[1]);s+='<line x1="'+x+'" y1="'+baseY+'" x2="'+x+'" y2="'+y.toFixed(0)+'" stroke="'+t.teal+'" stroke-width="4"/><circle cx="'+x+'" cy="'+y.toFixed(0)+'" r="5" fill="'+t.teal+'"/>';});
+  s+='<text x="406" y="56" text-anchor="start" font-size="12" fill="'+t.coral+'">← 包絡線(なめらかな曲線)</text>';
+  s+='<text x="340" y="160" text-anchor="middle" font-size="12" fill="'+t.fg+'">歯=各スピン状態(M_total)のピーク</text>';
+  s+='<text x="340" y="270" text-anchor="middle" font-size="12" fill="'+t.fg+'">運動エネルギー / M_total →</text>';
+  s+='</svg>';
+  document.getElementById('envelope').innerHTML=s;
+})();
+
+/* ---------- 運動エネルギー分裂シミュレータ ---------- */
+(function(){
+  var t=theme(), Nmax=6;
+  var cv=document.getElementById('combCanvas'), ctx=cv.getContext('2d');
+  var np=document.getElementById('np'), nr=document.getElementById('nr');
+  var npo=document.getElementById('npo'), nro=document.getElementById('nro');
+  var info=document.getElementById('combInfo');
+  function binom(n,k){var r=1;for(var i=0;i<k;i++){r=r*(n-i)/(i+1);}return Math.round(r);}
+  function draw(){
+    var n=+np.value, N=+nr.value; npo.textContent=n; nro.textContent=N;
+    var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    var W=r.width, H=r.height, mB=46, mT=18, mL=26, mR=26;
+    var pw=W-mL-mR, ph=H-mT-mB, cx=mL+pw/2, baseY=H-mB, total=Math.pow(2,n);
+    var Rrange=(n/2)*(2*Nmax+1), halfPx=(pw/2)*0.9, pxU=halfPx/Rrange;
+    var yFor=function(v){return baseY-v*ph*0.9;};
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle=t.grid; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(mL,baseY); ctx.lineTo(W-mR,baseY); ctx.stroke();
+    /* center ref */
+    ctx.save();ctx.setLineDash([3,4]);ctx.strokeStyle=t.grid;ctx.beginPath();ctx.moveTo(cx,mT-4);ctx.lineTo(cx,baseY);ctx.stroke();ctx.restore();
+    /* RF OFF */
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle=t.gray;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,baseY);ctx.lineTo(cx,yFor(1));ctx.stroke();ctx.restore();
+    ctx.strokeStyle=t.gray;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,yFor(1),4,0,7);ctx.stroke();
+    /* RF ON */
+    for(var k=0;k<=n;k++){var M=k-n/2, e=M*(2*N+1), x=cx+e*pxU, v=binom(n,k)/total;
+      ctx.strokeStyle=t.teal;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,baseY);ctx.lineTo(x,yFor(v));ctx.stroke();
+      ctx.fillStyle=t.teal;ctx.beginPath();ctx.arc(x,yFor(v),4,0,7);ctx.fill();}
+    ctx.fillStyle=t.fg;ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('E₀',cx,baseY+16);
+    ctx.textAlign='left';ctx.fillText('← 減速 (β)',mL,baseY+32);
+    ctx.textAlign='right';ctx.fillText('加速 (α) →',W-mR,baseY+32);
+    ctx.textAlign='center';ctx.fillText('運動エネルギー →',cx,baseY+32);
+    var cf=[];for(var j=0;j<=n;j++)cf.push(binom(n,j));
+    info.textContent='ピーク数 = '+(n+1)+'　強度比 = '+cf.join(' : ')+'　間隔 ∝ (2N+1) = '+(2*N+1);
+  }
+  [np,nr].forEach(function(el){['input','change'].forEach(function(ev){el.addEventListener(ev,draw);});});
+  window.addEventListener('resize',draw);
+  draw();
+})();
+})();
+</script>
+</body>
+</html>

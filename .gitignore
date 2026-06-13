@@ -1,0 +1,10 @@
+# 著作権の都合で公開リポジトリに含めない(J-STAGEで無料公開中)
+fuke_massspec_2022.pdf
+
+# ローカル設定
+.claude/
+
+# OS / Python
+.DS_Store
+__pycache__/
+*.pyc
